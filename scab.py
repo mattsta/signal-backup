@@ -69,6 +69,9 @@ messages = []
 for result in c:
     content = json.loads(result[0])
     cId = result[1]
+    if not cId:
+        # Signal's data model isn't as stable as one would imagine
+        continue
     convos[cId].append(content)
 
 # Unnecessary with our ORDER BY clause
