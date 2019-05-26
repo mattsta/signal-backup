@@ -900,13 +900,14 @@ function renderMessageAs(msg, onTopOf) {
     var attachmentRoot = "attachments.noindex/";
     if (media) {
         var thumb = media["thumbnail"];
-        var thumbPath = attachmentRoot + thumb["path"];
-        var thumbWidth = thumb["width"] + "px";
-        var thumbHeight = thumb["height"] + "px";
-
+        if(thumb) {
+            var thumbPath = attachmentRoot + thumb["path"];
+            var thumbWidth = thumb["width"] + "px";
+            var thumbHeight = thumb["height"] + "px";
+        }
         /* If attachments are used as the root message of a quote, it won't
          * have a base path itself, only a thumbnail. */
-        if (media["path"]) {
+        if (thumb && media["path"]) {
             var mediaId = media["path"].split("/")[1];
             var mediaPath = attachmentRoot + media["path"];
             var mediaWidth = media["width"];
@@ -928,7 +929,7 @@ function renderMessageAs(msg, onTopOf) {
             content += "<a href='#" + mediaId + "' rel='modal:open'><img src='" +
                         thumbPath +
                         "' style='width:" + thumbWidth + ";height:" + thumbHeight + "'></a>";
-        } else {
+        } else if(thumb) {
             content = "<img src='" +
                         thumbPath +
                         "' style='width:" + thumbWidth + ";height:" + thumbHeight + "'>";
