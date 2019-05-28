@@ -1,26 +1,36 @@
 # Signal Conversation Archive Backup
-
-## SCAB
-
-Welcome to [Signal Conversation Archive Backup (SCAB)](https://github.com/mattsta/signal-backup)!
-
-Full writeup is at: https://matt.sh/signal-backup
+Forked from https://github.com/mattsta/signal-backup
+Use to extract messages from Signal desktop client.
 
 ## Usage
-
-To backup your Signal Desktop database, run the following commands to:
-
-- check out SCAB
-- install Python requirements
-- copy your Signal Desktop database (and attachments) into a new directory so nothing is read against your live Signal DB
-- generate a single local HTML page web viewer for all your conversations
-
-```erlang
-git clone https://github.com/mattsta/signal-backup
-pip3 install -r requirements.txt
-cd signal-backup
-rsync -avz "/Users/$(whoami)/Library/Application Support/Signal" Signal-Archive
-cd Signal-Archive
-python3 ../scab.py
-open myConversations.html
+First clone and install requirements (preferably into a virtualenv):
 ```
+git clone https://github.com/carderne/signal-backup.git
+cd signal-backup
+pip install -r requirements.txt
+```
+
+Then use the script as follows:
+```
+Usage: scab.py [OPTIONS]
+
+Options:
+  --path PATH  Signal directory (on Linux it's ~/.config/Signal/)
+  --cont PATH  Output contacts JSON file
+  --conv PATH  Output conversation JSON file
+  --html PATH  Output HTML file
+  --help       Show this message and exit.
+```
+
+Then either open the output html file in a browser, or do something with the JSON files.
+
+## Troubleshooting
+If you run into issues with `pysqlcipher3`, do as follows to fix:
+```
+sudo apt update
+sudo apt install libsqlcipher-dev
+git clone https://github.com/carderne/pysqlcipher3.git
+cd pysqlcipher3
+python setup.py install
+```
+
