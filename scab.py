@@ -10,16 +10,20 @@ from pysqlcipher3 import dbapi2 as sqlcipher
 
 
 @click.command()
-@click.option("--path", type=click.Path(), help="Signal directory")
-@click.option("--cont", type=click.Path(), help="Output contacts JSON file")
-@click.option("--conv", type=click.Path(), help="Output conversation JSON file")
-@click.option("--html", type=click.Path(), help="Output HTML file")
-def export(path, cont, conv, html):
+@click.option("--from", "-f", "from_", type=click.Path(), help="Signal directory (on Linux: ~/.config/Signal/)")
+@click.option("--to", "-t", type=click.Path(), help="Output directory for JSON and HTML")
+def export(from_, to):
     # Locations of things
-    path = Path(path)
+    path = Path(from_)
     CONFIG = path / "config.json"
     DB = path / "sql/db.sqlite"
     html_in = Path(os.path.dirname(os.path.abspath(__file__))) / "chattr.html"
+
+    to = Path(to)
+    to.mkdir(parents=True, exist_ok=True)
+    cont = to / "contacts.json"
+    conv = to / "conversations.json"
+    html = to / "conversations.html"
 
     # Read sqlcipher key from Signal config file
     try:
