@@ -11,6 +11,22 @@ import click
 from pysqlcipher3 import dbapi2 as sqlcipher
 
 
+def config_location():
+    """Get OS-dependent config location."""
+    home = Path.home()
+    if sys.platform == "linux" or sys.platform == "linux2":
+        config_path = home / ".config/Signal"
+    elif sys.platform == "darwin":
+        config_path =  home / "Library/Application Support/Signal"
+    elif sys.platform == "win32":
+        config_path = path / "AppData\Roaming\Signal"
+    else:
+        print("Please manually enter Signal config location.")
+        sys.exit(1)
+
+    return config_path
+
+
 def copy_attachments(src, dst, conversations):
     """Copy attachments and reorganise in destination directory."""
     src = Path(src)
@@ -65,26 +81,32 @@ def make_simple(dst, conversations):
 
 
 @click.command()
-@click.argument("src", type=click.Path(), default="~/.config/Signal")
+@click.option("--config", "-c", type=click.Path(), help="Path to Signal config and database")
 @click.argument("dst", type=click.Path(), default="output")
-def export(src, dst):
+def export(dst, config=None):
     """
-    Read the Signal directory SRC and output .json and .html files to DST.
-    
+    Read the Signal directory and output .json and .html files to DST directory.
+    Assumes the following default directories, can be over-ridden wtih --config.
+
     \b
     Default Signal directories:
      - Linux: ~/.config/Signal
      - macOS: ~/Library/Application Support/Signal
+     - Windows: ~/AppData/Roaming/Signal
     """
 
-    src = Path(src).expanduser()
+    if config:
+        src = Path(config)
+    else:
+        src = config_location()
     config = src / "config.json"
     db_file = src / "sql" / "db.sqlite"
     html_in = Path(os.path.dirname(os.path.abspath(__file__))) / "chattr.html"
 
     dst = Path(dst).expanduser()
     if dst.is_dir():
-        shutil.rmtree(dst)
+        print("Output folder already exists, didn't do anything!")
+        sys.exit(1)
     dst.mkdir(parents=True)
     cont = dst / "contacts.json"
     conv = dst / "conversations.json"
@@ -181,6 +203,8 @@ def export(src, dst):
 
         with open(html, "w") as mine:
             mine.write(updated)
+
+    print(f"Done! Files exported to {dst}.")
 
 
 if __name__ == "__main__":
