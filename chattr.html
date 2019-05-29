@@ -897,10 +897,10 @@ function renderMessageAs(msg, onTopOf) {
     var style = msg["type"];
 
     var content = "not populated";
-    var attachmentRoot = "attachments.noindex/";
+    var attachmentRoot = "attachments/";
     if (media) {
         var thumb = media["thumbnail"];
-        var thumbPath = attachmentRoot + thumb["path"];
+        var thumbPath = attachmentRoot + media["fileName"];
         var thumbWidth = thumb["width"] + "px";
         var thumbHeight = thumb["height"] + "px";
 
@@ -908,7 +908,7 @@ function renderMessageAs(msg, onTopOf) {
          * have a base path itself, only a thumbnail. */
         if (media["path"]) {
             var mediaId = media["path"].split("/")[1];
-            var mediaPath = attachmentRoot + media["path"];
+            var mediaPath = attachmentRoot + media["fileName"];
             var mediaWidth = media["width"];
             var mediaHeight = media["height"];
 

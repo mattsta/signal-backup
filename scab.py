@@ -5,9 +5,37 @@ import os
 import sys
 import shutil
 from pathlib import Path
+from datetime import datetime
 
 import click
 from pysqlcipher3 import dbapi2 as sqlcipher
+
+
+def copy_attachments(src, dst, conversations):
+    """Copy attachments and reorganise in destination directory."""
+    src = Path(src)
+    dst = Path(dst)
+    dst_thumb = dst / "thumb"
+    if dst.is_dir():
+        shutil.rmtree(dst)
+    dst_thumb.mkdir(parents=True)
+
+    for key, messages in conversations.items():
+        for msg in messages:
+            attachments = msg["attachments"]
+            if len(attachments) > 0:
+                timestamp = msg["timestamp"]
+                date = datetime.fromtimestamp(timestamp / 1000.0).strftime("%Y-%m-%d")
+                for att in attachments:
+                    file_name = date + "_" + att["fileName"]
+                    att["fileName"] = file_name
+                    shutil.copy2(src / att["path"], dst / file_name)
+                    if "thumbnail" in att:
+                        shutil.copy2(
+                            src / att["thumbnail"]["path"], dst_thumb / file_name
+                        )
+
+    return conversations
 
 
 @click.command()
@@ -29,7 +57,9 @@ def export(src, dst):
     html_in = Path(os.path.dirname(os.path.abspath(__file__))) / "chattr.html"
 
     dst = Path(dst).expanduser()
-    dst.mkdir(parents=True, exist_ok=True)
+    if dst.is_dir():
+        shutil.rmtree(dst)
+    dst.mkdir(parents=True)
     cont = dst / "contacts.json"
     conv = dst / "conversations.json"
     html = dst / "conversations.html"
@@ -55,14 +85,14 @@ def export(src, dst):
         cursor.execute(f"PRAGMA cipher_hmac_algorithm = HMAC_SHA1")
         cursor.execute(f"PRAGMA cipher_kdf_algorithm = PBKDF2_HMAC_SHA1")
 
-    conversations = {}
+    contacts = {}
     convos = {}
 
     c.execute("SELECT json, id, name, profileName, type, members FROM conversations")
     for result in c:
         cId = result[1]
         isGroup = result[4] == "group"
-        conversations[cId] = {
+        contacts[cId] = {
             "id": result[1],
             "name": result[2],
             "profileName": result[3],
@@ -82,10 +112,13 @@ def export(src, dst):
                     useName = name[0] if name else member
                     usableMembers.append(useName)
 
-            conversations[cId]["members"] = usableMembers
+            contacts[cId]["members"] = usableMembers
 
     # Copy attachments into dst directory
-    shutil.copytree(src / "attachments.noindex", dst / "attachments.noindex")
+    # attachments_dst = dst / "attachments.noindex"
+    # if attachments_dst.is_dir():
+    # shutil.rmtree(attachments_dst)
+    # shutil.copytree(src / "attachments.noindex", attachments_dst)
 
     # We either need an ORDER BY or a manual sort() below because our web interface
     # processes message history in array order with javascript object traversal.
@@ -103,11 +136,11 @@ def export(src, dst):
             continue
         convos[cId].append(content)
 
-    # Exporting JSON to files is optional since we also paste it directly
-    # into the resulting HTML interface
+    convos = copy_attachments(src / "attachments.noindex", dst / "attachments", convos)
+
     with open(cont, "w") as con:
-        json.dump(conversations, con)
-        contactsJSON = json.dumps(conversations)
+        json.dump(contacts, con)
+        contactsJSON = json.dumps(contacts)
 
     with open(conv, "w") as ampc:
         json.dump(convos, ampc)
