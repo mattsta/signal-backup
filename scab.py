@@ -15,8 +15,10 @@ from pysqlcipher3 import dbapi2 as sqlcipher
 def export(src, dst):
     """
     Read the Signal directory SRC and output .json and .html files to DST.
+    
+    \b
     Default Signal directories:
-     - Linux: ~/.config/Signal/
+     - Linux: ~/.config/Signal
      - macOS: ~/Library/Application Support/Signal
     """
     # Locations of things

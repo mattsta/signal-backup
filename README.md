@@ -15,8 +15,10 @@ Then use the script as follows:
 Usage: scab.py [OPTIONS] SRC DST
 
   Read the Signal directory SRC and output .json and .html files to DST.
-  Default Signal directories:  - Linux: ~/.config/Signal/  - macOS:
-  ~/Library/Application Support/Signal
+
+  Default Signal directories:  
+  - Linux: ~/.config/Signal  
+  - macOS: ~/Library/Application Support/Signal
 
 Options:
   --help  Show this message and exit.
