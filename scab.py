@@ -3,6 +3,7 @@
 import json
 import os
 import sys
+import shutil
 from pathlib import Path
 
 import click
@@ -10,8 +11,8 @@ from pysqlcipher3 import dbapi2 as sqlcipher
 
 
 @click.command()
-@click.argument("src", type=click.Path())
-@click.argument("dst", type=click.Path())
+@click.argument("src", type=click.Path(), default="~/.config/Signal")
+@click.argument("dst", type=click.Path(), default="output")
 def export(src, dst):
     """
     Read the Signal directory SRC and output .json and .html files to DST.
@@ -21,28 +22,28 @@ def export(src, dst):
      - Linux: ~/.config/Signal
      - macOS: ~/Library/Application Support/Signal
     """
-    # Locations of things
-    path = Path(src)
-    CONFIG = path / "config.json"
-    DB = path / "sql" / "db.sqlite"
+
+    src = Path(src).expanduser()
+    config = src / "config.json"
+    db_file = src / "sql" / "db.sqlite"
     html_in = Path(os.path.dirname(os.path.abspath(__file__))) / "chattr.html"
 
-    dst = Path(dst)
+    dst = Path(dst).expanduser()
     dst.mkdir(parents=True, exist_ok=True)
     cont = dst / "contacts.json"
     conv = dst / "conversations.json"
     html = dst / "conversations.html"
+    attachments = dst / "attachments"
 
     # Read sqlcipher key from Signal config file
     try:
-        with open(CONFIG, "r") as conf:
+        with open(config, "r") as conf:
             key = json.loads(conf.read())["key"]
     except FileNotFoundError:
-        print(f"Error: {CONFIG} not found in current directory!")
-        print("Run again from inside your Signal Desktop user directory")
+        print(f"Error: {config} not found in directory {src}")
         sys.exit(1)
 
-    db = sqlcipher.connect(str(DB))
+    db = sqlcipher.connect(str(db_file))
     c = db.cursor()
     c2 = db.cursor()
 
@@ -54,10 +55,7 @@ def export(src, dst):
         cursor.execute(f"PRAGMA cipher_hmac_algorithm = HMAC_SHA1")
         cursor.execute(f"PRAGMA cipher_kdf_algorithm = PBKDF2_HMAC_SHA1")
 
-    # Hold numeric user id to conversation/user names
     conversations = {}
-
-    # Hold message body data
     convos = {}
 
     c.execute("SELECT json, id, name, profileName, type, members FROM conversations")
@@ -86,6 +84,9 @@ def export(src, dst):
 
             conversations[cId]["members"] = usableMembers
 
+    # Copy attachments into dst directory
+    shutil.copytree(src / "attachments.noindex", dst / "attachments.noindex")
+
     # We either need an ORDER BY or a manual sort() below because our web interface
     # processes message history in array order with javascript object traversal.
     # If we skip ordering here, the web interface will show the message history in
@@ -101,13 +102,6 @@ def export(src, dst):
             # Signal's data model isn't as stable as one would imagine
             continue
         convos[cId].append(content)
-
-    # Unnecessary with our ORDER BY clause
-    if False:
-        from operator import itemgetter
-
-        for convo in convos:
-            convos[convo].sort(key=itemgetter("sent_at"))
 
     # Exporting JSON to files is optional since we also paste it directly
     # into the resulting HTML interface
