@@ -12,14 +12,14 @@ pip install -r requirements.txt
 
 Then use the script as follows:
 ```
-Usage: scab.py [OPTIONS]
+Usage: scab.py [OPTIONS] SRC DST
+
+  Read the Signal directory SRC and output .json and .html files to DST.
+  Default Signal directories:  - Linux: ~/.config/Signal/  - macOS:
+  ~/Library/Application Support/Signal
 
 Options:
-  --path PATH  Signal directory (on Linux it's ~/.config/Signal/)
-  --cont PATH  Output contacts JSON file
-  --conv PATH  Output conversation JSON file
-  --html PATH  Output HTML file
-  --help       Show this message and exit.
+  --help  Show this message and exit.
 ```
 
 Then either open the output html file in a browser, or do something with the JSON files.
