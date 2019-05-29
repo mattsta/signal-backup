@@ -38,6 +38,32 @@ def copy_attachments(src, dst, conversations):
     return conversations
 
 
+def make_simple(dst, conversations):
+    """Output each conversation into a simple text file."""
+
+    if dst.is_dir():
+        shutil.rmtree(dst)
+    dst.mkdir(parents=True)
+
+    for key, messages in conversations.items():
+        with open(f"output/simple/{key}.txt", "w") as f:
+            for msg in messages:
+                timestamp = msg["timestamp"]
+                date = datetime.fromtimestamp(timestamp / 1000.0).strftime(
+                    "%Y-%m-%d, %H-%M-%S"
+                )
+                body = msg["body"]
+                attachments = msg["attachments"]
+
+                if msg["type"] == "outgoing":
+                    sender = "Me"
+                else:
+                    sender = msg["source"]
+                if len(attachments) > 0:
+                    body = f"[attachments] {body}"
+                print(f"[{date}] {sender} : {body}", file=f)
+
+
 @click.command()
 @click.argument("src", type=click.Path(), default="~/.config/Signal")
 @click.argument("dst", type=click.Path(), default="output")
@@ -64,6 +90,7 @@ def export(src, dst):
     conv = dst / "conversations.json"
     html = dst / "conversations.html"
     attachments = dst / "attachments"
+    simple = dst / "simple"
 
     # Read sqlcipher key from Signal config file
     try:
@@ -114,12 +141,6 @@ def export(src, dst):
 
             contacts[cId]["members"] = usableMembers
 
-    # Copy attachments into dst directory
-    # attachments_dst = dst / "attachments.noindex"
-    # if attachments_dst.is_dir():
-    # shutil.rmtree(attachments_dst)
-    # shutil.copytree(src / "attachments.noindex", attachments_dst)
-
     # We either need an ORDER BY or a manual sort() below because our web interface
     # processes message history in array order with javascript object traversal.
     # If we skip ordering here, the web interface will show the message history in
@@ -136,7 +157,10 @@ def export(src, dst):
             continue
         convos[cId].append(content)
 
-    convos = copy_attachments(src / "attachments.noindex", dst / "attachments", convos)
+
+    
+    convos = copy_attachments(src / "attachments.noindex", attachments, convos)
+    make_simple(simple, convos)
 
     with open(cont, "w") as con:
         json.dump(contacts, con)
