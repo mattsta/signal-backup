@@ -17,7 +17,7 @@ def config_location():
     if sys.platform == "linux" or sys.platform == "linux2":
         config_path = home / ".config/Signal"
     elif sys.platform == "darwin":
-        config_path =  home / "Library/Application Support/Signal"
+        config_path = home / "Library/Application Support/Signal"
     elif sys.platform == "win32":
         config_path = path / "AppData\Roaming\Signal"
     else:
@@ -54,15 +54,17 @@ def copy_attachments(src, dst, conversations):
     return conversations
 
 
-def make_simple(dst, conversations):
+def make_simple(dst, conversations, contacts):
     """Output each conversation into a simple text file."""
 
+    dst = Path(dst)
     if dst.is_dir():
         shutil.rmtree(dst)
     dst.mkdir(parents=True)
 
     for key, messages in conversations.items():
-        with open(f"output/simple/{key}.txt", "w") as f:
+        fname = dst / contacts[key]["name"]
+        with open(fname, "w") as f:
             for msg in messages:
                 timestamp = msg["timestamp"]
                 date = datetime.fromtimestamp(timestamp / 1000.0).strftime(
@@ -74,14 +76,20 @@ def make_simple(dst, conversations):
                 if msg["type"] == "outgoing":
                     sender = "Me"
                 else:
-                    sender = msg["source"]
+                    try:
+                        id = int(msg["source"][1:])
+                    except ValueError:
+                        id = msg["source"]
+                    sender = contacts[id]["name"]
                 if len(attachments) > 0:
                     body = f"[attachments] {body}"
                 print(f"[{date}] {sender} : {body}", file=f)
 
 
 @click.command()
-@click.option("--config", "-c", type=click.Path(), help="Path to Signal config and database")
+@click.option(
+    "--config", "-c", type=click.Path(), help="Path to Signal config and database"
+)
 @click.argument("dst", type=click.Path(), default="output")
 def export(dst, config=None):
     """
@@ -179,10 +187,8 @@ def export(dst, config=None):
             continue
         convos[cId].append(content)
 
-
-    
     convos = copy_attachments(src / "attachments.noindex", attachments, convos)
-    make_simple(simple, convos)
+    make_simple(simple, convos, contacts)
 
     with open(cont, "w") as con:
         json.dump(contacts, con)
