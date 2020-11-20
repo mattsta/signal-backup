@@ -78,7 +78,9 @@ def make_simple(dest, conversations, contacts):
             if timestamp is None:
                 date = "1970-01-01 00:00"
             else:
-                date = datetime.fromtimestamp(timestamp / 1000.0).strftime("%Y-%m-%d %H:%M")
+                date = datetime.fromtimestamp(timestamp / 1000.0).strftime(
+                    "%Y-%m-%d %H:%M"
+                )
             try:
                 body = msg["body"]
             except KeyError:
@@ -212,7 +214,10 @@ def create_html(dest):
     if os.path.isfile(css_source):
         shutil.copy2(css_source, css_dest)
     else:
-        print(f"Stylesheet ({css_source}) not found. You might want to install one manually at {css_dest}.")
+        print(
+            f"Stylesheet ({css_source}) not found."
+            f"You might want to install one manually at {css_dest}."
+        )
 
     md = markdown.Markdown()
 
@@ -231,6 +236,7 @@ def create_html(dest):
                 "<meta charset='utf-8'>"
                 f"<title>{name}</title>"
                 "<link rel=stylesheet href='../../style.css'>"
+                "<link rel=stylesheet href='../style.css'>"
                 "</head>"
                 "<body>"
                 f"<h1>{name}</h1>",
@@ -363,14 +369,16 @@ def merge_with_old(dest, old):
             name = sub.stem
             print(f"Merging {name}")
             print("Copying files")
-            merge_attachments(sub / "media", old / name / "media")
-            path_new = sub / "index.md"
-            path_old = old / name / "index.md"
-            try:
-                merge_chat(path_new, path_old)
-            except FileNotFoundError:
-                print(f"No old for {name}")
-            print()
+            dir_old = old / name
+            if dir_old.is_dir():
+                merge_attachments(sub / "media", dir_old / "media")
+                path_new = sub / "index.md"
+                path_old = dir_old / "index.md"
+                try:
+                    merge_chat(path_new, path_old)
+                except FileNotFoundError:
+                    print(f"No old for {name}")
+                print()
 
 
 @click.command()
