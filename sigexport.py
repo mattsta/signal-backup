@@ -401,16 +401,12 @@ def merge_with_old(dest, old):
     default=False,
     help="Whether to manually decrypt the db",
 )
-@click.option("--only-merge", is_flag=True, default=False)
-@click.option("--only-html", is_flag=True, default=False)
 def main(
     dest,
     old=None,
     source=None,
     overwrite=False,
     manual=False,
-    only_merge=False,
-    only_html=False,
 ):
     """
     Read the Signal directory and output attachments and chat files to DEST directory.
@@ -424,13 +420,6 @@ def main(
      - macOS: ~/Library/Application Support/Signal
      - Windows: ~/AppData/Roaming/Signal
     """
-
-    if only_merge:
-        merge_with_old(Path(dest), Path(old))
-        sys.exit()
-    if only_html:
-        create_html(Path(dest))
-        sys.exit()
 
     if source:
         src = Path(source)
