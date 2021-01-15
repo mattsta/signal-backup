@@ -45,22 +45,25 @@ def copy_attachments(src, dest, conversations, contacts):
         contact_path = dest / name / "media"
         contact_path.mkdir(exist_ok=True, parents=True)
         for msg in messages:
-            attachments = msg["attachments"]
-            if attachments:
-                date = datetime.fromtimestamp(msg["timestamp"] / 1000.0).strftime(
-                    "%Y-%m-%d"
-                )
-                for att in attachments:
-                    try:
-                        file_name = f"{date}_{att['fileName']}"
-                        att["fileName"] = file_name
-                        # account for erroneous backslash in path
-                        att_path = str(att["path"]).replace("\\", "/")
-                        shutil.copy2(src_att / att_path, contact_path / file_name)
-                    except KeyError:
-                        print(f"Broken attachment:\t{name}\t{att['fileName']}")
-                    except FileNotFoundError:
-                        print(f"Attachment not found:\t{name}\t{att['fileName']}")
+            try:
+                attachments = msg["attachments"]
+                if attachments:
+                    date = datetime.fromtimestamp(msg["timestamp"] / 1000.0).strftime(
+                        "%Y-%m-%d"
+                    )
+                    for att in attachments:
+                        try:
+                            file_name = f"{date}_{att['fileName']}"
+                            att["fileName"] = file_name
+                            # account for erroneous backslash in path
+                            att_path = str(att["path"]).replace("\\", "/")
+                            shutil.copy2(src_att / att_path, contact_path / file_name)
+                        except KeyError:
+                            print(f"Broken attachment:\t{name}\t{att['fileName']}")
+                        except FileNotFoundError:
+                            print(f"Attachment not found:\t{name}\t{att['fileName']}")
+            except KeyError:
+                print(f"No attachments for a message: {name}")
 
     return conversations
 
@@ -98,7 +101,6 @@ def make_simple(dest, conversations, contacts):
                 body = ""
             body = body.replace("`", "")  # stop md code sections forming
             body += "  "  # so that markdown newlines
-            attachments = msg["attachments"]
 
             if "type" in msg.keys() and msg["type"] == "outgoing":
                 sender = "Me"
@@ -115,24 +117,28 @@ def make_simple(dest, conversations, contacts):
                     print(f"No sender:\t\t{date}")
                     sender = "No-Sender"
 
-            for att in attachments:
-                file_name = att["fileName"]
-                # some file names are None
-                if file_name is None:
-                    file_name = "None"
-                path = Path("media") / file_name
-                path = Path(str(path).replace(" ", "%20"))
-                if path.suffix and path.suffix.split(".")[1] in [
-                    "png",
-                    "jpg",
-                    "jpeg",
-                    "gif",
-                    "tif",
-                    "tiff",
-                ]:
-                    body += "!"
-                body += f"[{file_name}](./{path})  "
-            print(f"[{date}] {sender}: {body}", file=mdfile)
+            try:
+                attachments = msg["attachments"]
+                for att in attachments:
+                    file_name = att["fileName"]
+                    # some file names are None
+                    if file_name is None:
+                        file_name = "None"
+                    path = Path("media") / file_name
+                    path = Path(str(path).replace(" ", "%20"))
+                    if path.suffix and path.suffix.split(".")[1] in [
+                        "png",
+                        "jpg",
+                        "jpeg",
+                        "gif",
+                        "tif",
+                        "tiff",
+                    ]:
+                        body += "!"
+                    body += f"[{file_name}](./{path})  "
+                print(f"[{date}] {sender}: {body}", file=mdfile)
+            except KeyError:
+                print(f"No attachments for a message: {name}")
 
 
 def fetch_data(db_file, key, manual=False):
@@ -187,13 +193,17 @@ def fetch_data(db_file, key, manual=False):
         if is_group:
             usable_members = []
             # Match group members from phone number to name
-            for member in result[5].split():
-                c2.execute(
-                    "SELECT name, profileName FROM conversations WHERE id=?", [member]
-                )
-                for name in c2:
-                    usable_members.append(name[0] if name else member)
-            contacts[cid]["members"] = usable_members
+            if result[5] is None:
+                print("Empty group.")
+            else:
+                for member in result[5].split():
+                    c2.execute(
+                        "SELECT name, profileName FROM conversations WHERE id=?",
+                        [member],
+                    )
+                    for name in c2:
+                        usable_members.append(name[0] if name else member)
+                contacts[cid]["members"] = usable_members
 
     c.execute("SELECT json, conversationId " "FROM messages " "ORDER BY sent_at")
     for result in c:
