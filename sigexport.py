@@ -39,7 +39,7 @@ def copy_attachments(src, dest, conversations, contacts):
 
     for key, messages in conversations.items():
         name = contacts[key]["name"]
-        #some contact names are None
+        # some contact names are None
         if name is None:
             name = "None"
         contact_path = dest / name / "media"
@@ -54,8 +54,8 @@ def copy_attachments(src, dest, conversations, contacts):
                     try:
                         file_name = f"{date}_{att['fileName']}"
                         att["fileName"] = file_name
-                        #account for erroneous backslash in path
-                        att_path=str(att["path"]).replace("\\","/")
+                        # account for erroneous backslash in path
+                        att_path = str(att["path"]).replace("\\", "/")
                         shutil.copy2(src_att / att_path, contact_path / file_name)
                     except KeyError:
                         print(f"Broken attachment:\t{name}\t{att['fileName']}")
@@ -72,10 +72,10 @@ def make_simple(dest, conversations, contacts):
     for key, messages in conversations.items():
         name = contacts[key]["name"]
         is_group = contacts[key]["is_group"]
-        #some contact names are None
+        # some contact names are None
         if name is None:
             name = "None"
-        mdfile = open(dest / name / "index.md", 'a')
+        mdfile = open(dest / name / "index.md", "a")
 
         for msg in messages:
             try:
@@ -117,7 +117,7 @@ def make_simple(dest, conversations, contacts):
 
             for att in attachments:
                 file_name = att["fileName"]
-                #some file names are None
+                # some file names are None
                 if file_name is None:
                     file_name = "None"
                 path = Path("media") / file_name
@@ -238,8 +238,8 @@ def create_html(dest):
             name = sub.stem
             print(f"Doing html for {name}")
             path = sub / "index.md"
-            #touch first
-            open(path, 'a')
+            # touch first
+            open(path, "a")
             with path.open() as f:
                 lines = f.readlines()
             lines = lines_to_msgs(lines)
@@ -416,11 +416,7 @@ def merge_with_old(dest, old):
     help="Whether to manually decrypt the db",
 )
 def main(
-    dest,
-    old=None,
-    source=None,
-    overwrite=False,
-    manual=False,
+    dest, old=None, source=None, overwrite=False, manual=False,
 ):
     """
     Read the Signal directory and output attachments and chat files to DEST directory.
