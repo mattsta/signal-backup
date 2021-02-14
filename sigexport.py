@@ -141,7 +141,7 @@ def make_simple(dest, conversations, contacts):
                 print(f"No attachments for a message: {name}")
 
 
-def fetch_data(db_file, key, manual=False):
+def fetch_data(db_file, key, manual=False, chat=None):
     """Load SQLite data into dicts."""
 
     contacts = {}
@@ -175,7 +175,11 @@ def fetch_data(db_file, key, manual=False):
             cursor.execute("PRAGMA cipher_hmac_algorithm = HMAC_SHA1")
             cursor.execute("PRAGMA cipher_kdf_algorithm = PBKDF2_HMAC_SHA1")
 
-    c.execute("SELECT type, id, e164, name, profileName, members FROM conversations")
+    query = "SELECT type, id, e164, name, profileName, members FROM conversations"
+    if (chat is not None):
+        chat = '","'.join(chat)
+        query = query + f' WHERE name IN ("{chat}") OR profileName IN ("{chat}")'
+    c.execute(query)
     for result in c:
         is_group = result[0] == "group"
         cid = result[1]
@@ -209,7 +213,7 @@ def fetch_data(db_file, key, manual=False):
     for result in c:
         content = json.loads(result[0])
         cid = result[1]
-        if cid:
+        if cid and cid in convos:
             convos[cid].append(content)
 
     if db_file_decrypted.exists():
@@ -410,6 +414,9 @@ def merge_with_old(dest, old):
 @click.option(
     "--source", "-s", type=click.Path(), help="Path to Signal source and database"
 )
+@click.option(
+    "--chat", "-c", help="Comma-separated chat names to include. These are contact names or group names"
+)
 @click.option("--old", type=click.Path(), help="Path to previous export to merge with")
 @click.option(
     "--overwrite",
@@ -426,7 +433,7 @@ def merge_with_old(dest, old):
     help="Whether to manually decrypt the db",
 )
 def main(
-    dest, old=None, source=None, overwrite=False, manual=False,
+    dest, old=None, source=None, overwrite=False, manual=False, chat=None
 ):
     """
     Read the Signal directory and output attachments and chat files to DEST directory.
@@ -448,6 +455,9 @@ def main(
     source = src / "config.json"
     db_file = src / "sql" / "db.sqlite"
 
+    if chat:
+        chat = chat.split(',')
+
     dest = Path(dest).expanduser()
     if not dest.is_dir():
         dest.mkdir(parents=True)
@@ -464,7 +474,7 @@ def main(
         print(f"Error: {source} not found in directory {src}")
         sys.exit(1)
 
-    convos, contacts = fetch_data(db_file, key, manual=manual)
+    convos, contacts = fetch_data(db_file, key, manual=manual, chat=chat)
     contacts = fix_names(contacts)
     convos = copy_attachments(src, dest, convos, contacts)
     make_simple(dest, convos, contacts)
