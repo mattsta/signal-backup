@@ -27,6 +27,7 @@ cd signal-export
 pip install -r requirements.txt
 ```
 
+### For Linux
 Then to get sqlcipher working:
 ```
 sudo apt install libsqlcipher-dev libssl-dev
@@ -40,6 +41,10 @@ mkdir build && cd build
 ../configure --enable-tempstore=yes CFLAGS="-DSQLITE_HAS_CODEC" LDFLAGS="-lcrypto"
 sudo make install
 ```
+
+### For MacOS
+- Install [Homebrew](https://brew.sh).
+- Run `brew install openssl sqlcipher`
 
 ## Usage
 Assuming you followed the instructions above, you need to use the `--manual` flag in the tool.
