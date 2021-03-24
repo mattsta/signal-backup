@@ -1,0 +1,93 @@
+* {
+    box-sizing: border-box;
+}
+
+html {
+    background-color: #F6F6F6;
+    font-size: 16px;
+    margin-left: calc(100vw - 100%);
+    margin-right: 0;
+}
+
+body {
+    color: rgb(73, 78, 82);
+    font-family: Carlito, Calibri, sans-serif;
+    line-height: 1.5;
+}
+
+h1 {
+    font-size: 1.25em;
+}
+
+a {
+    color: rgb(52, 105, 160);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+div {
+    margin-bottom: 2em;
+}
+
+.date {
+    margin-bottom: 1em;
+    padding: 0.5em;
+}
+
+.sender {
+    margin-left: 3em;
+}
+
+.body {
+    display: block;
+    margin-left: 3em;
+}
+
+figure > label > img {
+    width: 300px;
+}
+
+label > img {
+    cursor: pointer;
+}
+
+.modal {
+    opacity: 0;
+    visibility: hidden;
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    text-align: left;
+    background: rgba(0, 0, 0, 0.8);
+    transition: opacity .25s ease;
+    z-index: 99;
+}
+
+.modal-content {
+    width: 100vw;
+    height: 100vh;
+}
+
+.modal-photo {
+    width: 70%;
+    max-height: 80%;
+    position: absolute;
+    left: 50%;
+    top: 10%;
+    margin-left: -35%;
+    object-fit: scale-down;
+}
+
+.modal-state {
+    display: none;
+}
+
+.modal-state:checked + .modal {
+    opacity: 1;
+    visibility: visible;
+}
