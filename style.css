@@ -15,8 +15,20 @@ body {
     line-height: 1.5;
 }
 
+.msg {
+    width: 70ch;
+    border-radius: 5px;
+    padding: 0.8em;
+    background-color: #cecace;
+}
+
+.msg.me {
+    margin-left: 300px;
+    background-color: #bfd9d7;
+}
+
 h1 {
-    font-size: 1.25em;
+    font-size: 2em;
 }
 
 a {
@@ -32,21 +44,26 @@ div {
     margin-bottom: 2em;
 }
 
-.date {
-    margin-bottom: 1em;
-    padding: 0.5em;
+.date, .time {
+    float: right;
+}
+
+.time {
+    clear: right;
 }
 
 .sender {
-    margin-left: 3em;
+    font-weight: bold;
 }
 
 .body {
     display: block;
     margin-left: 3em;
+    word-wrap: break-word;
 }
 
-figure > label > img {
+figure > label > img, video {
+    display: block;
     width: 300px;
 }
 

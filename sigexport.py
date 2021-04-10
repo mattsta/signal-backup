@@ -176,7 +176,7 @@ def fetch_data(db_file, key, manual=False, chat=None):
             cursor.execute("PRAGMA cipher_kdf_algorithm = PBKDF2_HMAC_SHA512")
 
     query = "SELECT type, id, e164, name, profileName, members FROM conversations"
-    if (chat is not None):
+    if chat is not None:
         chat = '","'.join(chat)
         query = query + f' WHERE name IN ("{chat}") OR profileName IN ("{chat}")'
     c.execute(query)
@@ -263,7 +263,6 @@ def create_html(dest):
                 "<html lang='en'><head>"
                 "<meta charset='utf-8'>"
                 f"<title>{name}</title>"
-                "<link rel=stylesheet href='../../style.css'>"
                 "<link rel=stylesheet href='../style.css'>"
                 "</head>"
                 "<body>"
@@ -272,6 +271,8 @@ def create_html(dest):
             )
             for msg in lines:
                 date, sender, body = msg
+                sender = sender[1:-1]
+                date, time = date[1:-1].replace(",", "").split(" ")
                 body = md.convert(body)
 
                 # links
@@ -311,8 +312,10 @@ def create_html(dest):
                     temp.video.source["src"] = href
                     v.insert_after(temp)
 
+                cl = "msg me" if sender == "Me" else "msg"
                 print(
-                    f"<div class=msg><span class=date>{date}</span>"
+                    f"<div class='{cl}'><span class=date>{date}</span>"
+                    f"<span class=time>{time}</span>",
                     f"<span class=sender>{sender}</span>"
                     f"<span class=body>{soup.prettify()}</span></div>",
                     file=htfile,
@@ -374,11 +377,13 @@ def merge_chat(path_new, path_old):
     with path_new.open() as f:
         new = f.readlines()
 
-    print(f"Last line old:\n{old[-1][:30]}\nFirst line new:\n{new[0][:30]}")
-    print(f"Len old: {len(old)}  -  Len new: {len(new)}")
+    try:
+        print(f"Last line old:\t{old[-1][:30]}\nFirst line new:\t{new[0][:30]}")
+    except IndexError:
+        print("No new messages for this conversation")
+        return
     old = lines_to_msgs(old)
     new = lines_to_msgs(new)
-    print(f"Should be shorter: Len old: {len(old)}  -  Len new: {len(new)}")
 
     merged = old + new
     merged = [m[0] + m[1] + m[2] for m in merged]
@@ -396,7 +401,6 @@ def merge_with_old(dest, old):
         if sub.is_dir():
             name = sub.stem
             print(f"Merging {name}")
-            print("Copying files")
             dir_old = old / name
             if dir_old.is_dir():
                 merge_attachments(sub / "media", dir_old / "media")
@@ -415,7 +419,9 @@ def merge_with_old(dest, old):
     "--source", "-s", type=click.Path(), help="Path to Signal source and database"
 )
 @click.option(
-    "--chat", "-c", help="Comma-separated chat names to include. These are contact names or group names"
+    "--chat",
+    "-c",
+    help="Comma-separated chat names to include. These are contact names or group names",
 )
 @click.option("--old", type=click.Path(), help="Path to previous export to merge with")
 @click.option(
@@ -432,9 +438,7 @@ def merge_with_old(dest, old):
     default=False,
     help="Whether to manually decrypt the db",
 )
-def main(
-    dest, old=None, source=None, overwrite=False, manual=False, chat=None
-):
+def main(dest, old=None, source=None, overwrite=False, manual=False, chat=None):
     """
     Read the Signal directory and output attachments and chat files to DEST directory.
     Assumes the following default directories, can be overridden wtih --source.
@@ -456,12 +460,15 @@ def main(
     db_file = src / "sql" / "db.sqlite"
 
     if chat:
-        chat = chat.split(',')
+        chat = chat.split(",")
 
     dest = Path(dest).expanduser()
     if not dest.is_dir():
         dest.mkdir(parents=True)
-    elif not overwrite:
+    elif overwrite:
+        shutil.rmtree(dest)
+        dest.mkdir(parents=True)
+    else:
         print("Output folder already exists, didn't do anything!")
         print("Use --overwrite to ignore existing directory.")
         sys.exit(1)
