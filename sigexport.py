@@ -53,11 +53,14 @@ def copy_attachments(src, dest, conversations, contacts):
                     )
                     for att in attachments:
                         try:
-                            file_name = f"{date}_{att['fileName']}"
-                            att["fileName"] = file_name
+                            att["fileName"] = f"{date}_{att['fileName']}".replace(
+                                " ", "_"
+                            ).replace("/", "-")
                             # account for erroneous backslash in path
                             att_path = str(att["path"]).replace("\\", "/")
-                            shutil.copy2(src_att / att_path, contact_path / file_name)
+                            shutil.copy2(
+                                src_att / att_path, contact_path / att["fileName"]
+                            )
                         except KeyError:
                             print(f"Broken attachment:\t{name}\t{att['fileName']}")
                         except FileNotFoundError:
