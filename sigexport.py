@@ -324,12 +324,12 @@ def create_html(dest, msgs_per_page=100):
                     im.replace_with(temp)
 
                 # voice notes
-                voices = soup.select(r"a[href*=Message\.m4a]")
+                voices = soup.select(r"a[href*=\.m4a]")
                 for v in voices:
                     href = v["href"]
                     temp = BeautifulSoup(audio_template, "html.parser")
                     temp.audio.source["src"] = href
-                    v.insert_after(temp)
+                    v.replace_with(temp)
 
                 # videos
                 videos = soup.select(r"a[href*=\.mp4]")
@@ -337,7 +337,7 @@ def create_html(dest, msgs_per_page=100):
                     href = v["href"]
                     temp = BeautifulSoup(video_template, "html.parser")
                     temp.video.source["src"] = href
-                    v.insert_after(temp)
+                    v.replace_with(temp)
 
                 cl = "msg me" if sender == "Me" else "msg"
                 print(
