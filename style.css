@@ -4,31 +4,58 @@
 
 html {
     background-color: #F6F6F6;
-    font-size: 16px;
-    margin-left: calc(100vw - 100%);
-    margin-right: 0;
 }
 
 body {
     color: rgb(73, 78, 82);
     font-family: Carlito, Calibri, sans-serif;
     line-height: 1.5;
+    margin: 0;
+}
+
+.first, .last, .next, .prev {
+    position: fixed;
+    left: 0;
+    font-size: 3em;
+    margin: 20px;
+}
+
+.first {
+    top: 0;
+}
+
+.prev {
+    top: 40%;
+}
+
+.next {
+    bottom: 40%;
+}
+
+.last {
+    bottom: 0;
+}
+
+.page {
+    display: none;
+    padding: 20px;
+}
+
+.page:target {
+    display: block;
 }
 
 .msg {
     width: 70ch;
     border-radius: 5px;
     padding: 0.8em;
+    margin-left: 150px;
     background-color: #cecace;
 }
 
 .msg.me {
-    margin-left: 300px;
+    margin-left: 450px;
     background-color: #bfd9d7;
-}
-
-h1 {
-    font-size: 2em;
 }
 
 a {

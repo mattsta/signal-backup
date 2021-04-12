@@ -233,7 +233,7 @@ def fix_names(contacts):
     return contacts
 
 
-def create_html(dest):
+def create_html(dest, msgs_per_page=100):
     root = Path(__file__).resolve().parents[0]
     css_source = root / "style.css"
     css_dest = dest / "style.css"
@@ -257,6 +257,7 @@ def create_html(dest):
             with path.open() as f:
                 lines = f.readlines()
             lines = lines_to_msgs(lines)
+            last_page = int(len(lines) / msgs_per_page)
             htfile = open(sub / "index.html", "w")
             print(
                 "<!doctype html>"
@@ -266,10 +267,33 @@ def create_html(dest):
                 "<link rel=stylesheet href='../style.css'>"
                 "</head>"
                 "<body>"
-                f"<h1>{name}</h1>",
+                "<div class=first><a href=#pg0>FIRST</a></div>"
+                f"<div class=last><a href=#pg{last_page}>LAST</a></div>",
                 file=htfile,
             )
-            for msg in lines:
+
+            page_num = 0
+            for i, msg in enumerate(lines):
+                if i % msgs_per_page == 0:
+                    nav = ""
+                    if i > 0:
+                        nav += "</div>"
+                    nav += f"<div class=page id=pg{page_num}>"
+                    nav += "<nav>"
+                    nav += "<div class=prev>"
+                    if page_num != 0:
+                        nav += f"<a href=#pg{page_num-1}>PREV</a>"
+                    else:
+                        nav += "PREV"
+                    nav += "</div><div class=next>"
+                    if page_num != last_page:
+                        nav += f"<a href=#pg{page_num+1}>NEXT</a>"
+                    else:
+                        nav += "NEXT"
+                    nav += "</div></nav>"
+                    print(nav, file=htfile)
+                    page_num += 1
+
                 date, sender, body = msg
                 sender = sender[1:-1]
                 date, time = date[1:-1].replace(",", "").split(" ")
@@ -320,6 +344,12 @@ def create_html(dest):
                     f"<span class=body>{soup.prettify()}</span></div>",
                     file=htfile,
                 )
+            print("</div>", file=htfile)
+            print(
+                "<script>if (!document.location.hash){"
+                "document.location.hash = 'pg0';}</script>",
+                file=htfile,
+            )
             print("</body></html>", file=htfile)
 
 
@@ -378,7 +408,10 @@ def merge_chat(path_new, path_old):
         new = f.readlines()
 
     try:
-        print(f"Last line old:\t{old[-1][:30]}\nFirst line new:\t{new[0][:30]}")
+        print(f"First line old:\t{old[0][:30]}")
+        print(f"Last line old:\t{old[-1][:30]}")
+        print(f"First line new:\t{new[0][:30]}")
+        print(f"Last line new:\t{new[-1][:30]}")
     except IndexError:
         print("No new messages for this conversation")
         return
