@@ -67,6 +67,7 @@ Options:
   --old PATH         Path to previous export to merge with
   -o, --overwrite    Flag to overwrite existing output
   -m, --manual       Flag to manually decrypt the database
+  -v, --verbose      Enable verbose output logging
   --help             Show this message and exit.
 ```
 
@@ -76,6 +77,3 @@ You can add `--source /path/to/source/dir/` if the script doesn't manage to find
 - Windows: `~/AppData/Roaming/Signal/`
 
 You can also use `--old /previously/exported/dir/` to merge the new export with a previous one. _Nothing will be overwritten!_ It will put the combined results in whatever output directory you specified and leave your previos export untouched. Exercise is left to the reader to verify that all went well before deleting the previous one.
-
-## Original method
-You can try running the script _without_ `--manual` but I don't think it will work. You'll probably get an error like `pysqlcipher3.dbapi2.DatabaseError: file is encrypted or is not a database`

@@ -14,6 +14,9 @@ import markdown
 from bs4 import BeautifulSoup
 
 
+log = False
+
+
 def source_location():
     """Get OS-dependent source location."""
 
@@ -39,6 +42,8 @@ def copy_attachments(src, dest, conversations, contacts):
 
     for key, messages in conversations.items():
         name = contacts[key]["name"]
+        if log:
+            print(f"\tCopying attachments for: {name}")
         # some contact names are None
         if name is None:
             name = "None"
@@ -62,11 +67,18 @@ def copy_attachments(src, dest, conversations, contacts):
                                 src_att / att_path, contact_path / att["fileName"]
                             )
                         except KeyError:
-                            print(f"Broken attachment:\t{name}\t{att['fileName']}")
+                            if log:
+                                print(
+                                    f"\t\tBroken attachment:\t{name}\t{att['fileName']}"
+                                )
                         except FileNotFoundError:
-                            print(f"Attachment not found:\t{name}\t{att['fileName']}")
+                            if log:
+                                print(
+                                    f"\t\tAttachment not found:\t{name} {att['fileName']}"
+                                )
             except KeyError:
-                print(f"No attachments for a message: {name}")
+                if log:
+                    print(f"\t\tNo attachments for a message: {name}")
 
     return conversations
 
@@ -77,6 +89,8 @@ def make_simple(dest, conversations, contacts):
     dest = Path(dest)
     for key, messages in conversations.items():
         name = contacts[key]["name"]
+        if log:
+            print(f"\tDoing markdown for: {name}")
         is_group = contacts[key]["is_group"]
         # some contact names are None
         if name is None:
@@ -88,17 +102,23 @@ def make_simple(dest, conversations, contacts):
                 timestamp = msg["timestamp"]
             except KeyError:
                 timestamp = msg["sent_at"]
-                print("No timestamp; use sent_at")
+                if log:
+                    print("\t\tNo timestamp; use sent_at")
             if timestamp is None:
                 date = "1970-01-01 00:00"
             else:
                 date = datetime.fromtimestamp(timestamp / 1000.0).strftime(
                     "%Y-%m-%d %H:%M"
                 )
+
+            if log:
+                print(f"\t\tDoing {name}, msg: {date}")
+
             try:
                 body = msg["body"]
             except KeyError:
-                print(f"No body:\t\t{date}")
+                if log:
+                    print(f"\t\tNo body:\t\t{date}")
                 body = ""
             if body is None:
                 body = ""
@@ -117,7 +137,8 @@ def make_simple(dest, conversations, contacts):
                     else:
                         sender = contacts[msg["conversationId"]]["name"]
                 except KeyError:
-                    print(f"No sender:\t\t{date}")
+                    if log:
+                        print(f"\t\tNo sender:\t\t{date}")
                     sender = "No-Sender"
 
             try:
@@ -141,7 +162,8 @@ def make_simple(dest, conversations, contacts):
                     body += f"[{file_name}](./{path})  "
                 print(f"[{date}] {sender}: {body}", file=mdfile)
             except KeyError:
-                print(f"No attachments for a message: {name}")
+                if log:
+                    print(f"\t\tNo attachments for a message: {name}, {date}")
 
 
 def fetch_data(db_file, key, manual=False, chat=None):
@@ -184,6 +206,8 @@ def fetch_data(db_file, key, manual=False, chat=None):
         query = query + f' WHERE name IN ("{chat}") OR profileName IN ("{chat}")'
     c.execute(query)
     for result in c:
+        if log:
+            print(f"\tLoading SQL results for: {result[3]}")
         is_group = result[0] == "group"
         cid = result[1]
         contacts[cid] = {
@@ -201,7 +225,8 @@ def fetch_data(db_file, key, manual=False, chat=None):
             usable_members = []
             # Match group members from phone number to name
             if result[5] is None:
-                print("Empty group.")
+                if log:
+                    print("\tEmpty group.")
             else:
                 for member in result[5].split():
                     c2.execute(
@@ -253,7 +278,8 @@ def create_html(dest, msgs_per_page=100):
     for sub in dest.iterdir():
         if sub.is_dir():
             name = sub.stem
-            print(f"Doing html for {name}")
+            if log:
+                print(f"\tDoing html for {name}")
             path = sub / "index.md"
             # touch first
             open(path, "a")
@@ -411,13 +437,17 @@ def merge_chat(path_new, path_old):
         new = f.readlines()
 
     try:
-        print(f"First line old:\t{old[0][:30]}")
-        print(f"Last line old:\t{old[-1][:30]}")
-        print(f"First line new:\t{new[0][:30]}")
-        print(f"Last line new:\t{new[-1][:30]}")
+        a, b, c, d = old[0][:30], old[-1][:30], new[0][:30], new[-1][:30]
+        if log:
+            print(f"\t\tFirst line old:\t{a}")
+            print(f"\t\tLast line old:\t{b}")
+            print(f"\t\tFirst line new:\t{c}")
+            print(f"\t\tLast line new:\t{d}")
     except IndexError:
-        print("No new messages for this conversation")
+        if log:
+            print("\t\tNo new messages for this conversation")
         return
+
     old = lines_to_msgs(old)
     new = lines_to_msgs(new)
 
@@ -430,13 +460,11 @@ def merge_chat(path_new, path_old):
 
 
 def merge_with_old(dest, old):
-    print("Going to merge output with old export at:")
-    print(old)
-    print("No existing files will be deleted or overwritten")
     for sub in dest.iterdir():
         if sub.is_dir():
             name = sub.stem
-            print(f"Merging {name}")
+            if log:
+                print(f"\tMerging {name}")
             dir_old = old / name
             if dir_old.is_dir():
                 merge_attachments(sub / "media", dir_old / "media")
@@ -445,7 +473,8 @@ def merge_with_old(dest, old):
                 try:
                     merge_chat(path_new, path_old)
                 except FileNotFoundError:
-                    print(f"No old for {name}")
+                    if log:
+                        print(f"\tNo old for {name}")
                 print()
 
 
@@ -468,13 +497,22 @@ def merge_with_old(dest, old):
     help="Flag to overwrite existing output",
 )
 @click.option(
+    "--verbose",
+    "-v",
+    is_flag=True,
+    default=False,
+    help="Enable verbose output logging",
+)
+@click.option(
     "--manual",
     "-m",
     is_flag=True,
     default=False,
     help="Whether to manually decrypt the db",
 )
-def main(dest, old=None, source=None, overwrite=False, manual=False, chat=None):
+def main(
+    dest, old=None, source=None, overwrite=False, verbose=False, manual=False, chat=None
+):
     """
     Read the Signal directory and output attachments and chat files to DEST directory.
     Assumes the following default directories, can be overridden wtih --source.
@@ -487,6 +525,9 @@ def main(dest, old=None, source=None, overwrite=False, manual=False, chat=None):
      - macOS: ~/Library/Application Support/Signal
      - Windows: ~/AppData/Roaming/Signal
     """
+
+    global log
+    log = verbose
 
     if source:
         src = Path(source)
@@ -517,15 +558,21 @@ def main(dest, old=None, source=None, overwrite=False, manual=False, chat=None):
         print(f"Error: {source} not found in directory {src}")
         sys.exit(1)
 
+    print(f"\nFetching data from {db_file}")
     convos, contacts = fetch_data(db_file, key, manual=manual, chat=chat)
     contacts = fix_names(contacts)
+    print("\nCopying and renaming attachments")
     convos = copy_attachments(src, dest, convos, contacts)
+    print("\nCreating markdown files")
     make_simple(dest, convos, contacts)
     if old:
+        print(f"\nMerging old at {old} into output directory")
+        print("No existing files will be deleted or overwritten!")
         merge_with_old(dest, Path(old))
+    print("\nCreating HTML files")
     create_html(dest)
 
-    print(f"\nDone! Files exported to {dest}.")
+    print(f"\nDone! Files exported to {dest}.\n")
 
 
 if __name__ == "__main__":
