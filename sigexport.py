@@ -80,8 +80,6 @@ def copy_attachments(src, dest, conversations, contacts):
                 if log:
                     print(f"\t\tNo attachments for a message: {name}")
 
-    return conversations
-
 
 def make_simple(dest, conversations, contacts):
     """Output each conversation into a simple text file."""
@@ -562,7 +560,7 @@ def main(
     convos, contacts = fetch_data(db_file, key, manual=manual, chat=chat)
     contacts = fix_names(contacts)
     print("\nCopying and renaming attachments")
-    convos = copy_attachments(src, dest, convos, contacts)
+    copy_attachments(src, dest, convos, contacts)
     print("\nCreating markdown files")
     make_simple(dest, convos, contacts)
     if old:
