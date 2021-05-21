@@ -335,22 +335,19 @@ def create_html(dest, msgs_per_page=100):
                 soup = BeautifulSoup(body, "html.parser")
                 imgs = soup.find_all("img")
                 for im in imgs:
-                    temp = BeautifulSoup(figure_template, "html.parser")
-                    src = im["src"]
-                    temp.figure.div.label.div.img["src"] = src
-                    temp.figure.label.img["src"] = src
-                    try:
+                    if im.get("src"):
+                        temp = BeautifulSoup(figure_template, "html.parser")
+                        src = im["src"]
+                        temp.figure.div.label.div.img["src"] = src
+                        temp.figure.label.img["src"] = src
+
                         alt = im["alt"]
-                    except KeyError:
-                        alt = "alt"
-                        if log:
-                            print(f"No alt tag for this img: {src}")
-                    temp.figure.label["for"] = alt
-                    temp.figure.label.img["alt"] = alt
-                    temp.figure.input["id"] = alt
-                    temp.figure.div.label["for"] = alt
-                    temp.figure.div.label.div.img["alt"] = alt
-                    im.replace_with(temp)
+                        temp.figure.label["for"] = alt
+                        temp.figure.label.img["alt"] = alt
+                        temp.figure.input["id"] = alt
+                        temp.figure.div.label["for"] = alt
+                        temp.figure.div.label.div.img["alt"] = alt
+                        im.replace_with(temp)
 
                 # voice notes
                 voices = soup.select(r"a[href*=\.m4a]")
