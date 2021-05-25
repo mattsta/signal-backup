@@ -56,9 +56,9 @@ def copy_attachments(src, dest, conversations, contacts):
                     date = datetime.fromtimestamp(msg["timestamp"] / 1000.0).strftime(
                         "%Y-%m-%d"
                     )
-                    for att in attachments:
+                    for i, att in enumerate(attachments):
                         try:
-                            att["fileName"] = f"{date}_{att['fileName']}".replace(
+                            att["fileName"] = f"{date}_{i:02}_{att['fileName']}".replace(
                                 " ", "_"
                             ).replace("/", "-")
                             # account for erroneous backslash in path
