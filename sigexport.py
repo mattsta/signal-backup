@@ -164,7 +164,7 @@ def make_simple(dest, conversations, contacts):
                     print(f"\t\tNo attachments for a message: {name}, {date}")
 
 
-def fetch_data(db_file, key, manual=False, chat=None):
+def fetch_data(db_file, key, manual=False, chats=None):
     """Load SQLite data into dicts."""
 
     contacts = {}
@@ -199,9 +199,9 @@ def fetch_data(db_file, key, manual=False, chat=None):
             cursor.execute("PRAGMA cipher_kdf_algorithm = PBKDF2_HMAC_SHA512")
 
     query = "SELECT type, id, e164, name, profileName, members FROM conversations"
-    if chat is not None:
-        chat = '","'.join(chat)
-        query = query + f' WHERE name IN ("{chat}") OR profileName IN ("{chat}")'
+    if chats is not None:
+        chats = '","'.join(chats)
+        query = query + f' WHERE name IN ("{chats}") OR profileName IN ("{chats}")'
     c.execute(query)
     for result in c:
         if log:
@@ -484,9 +484,16 @@ def merge_with_old(dest, old):
     "--source", "-s", type=click.Path(), help="Path to Signal source and database"
 )
 @click.option(
+    "--chats",
     "--chat",
     "-c",
     help="Comma-separated chat names to include. These are contact names or group names",
+)
+@click.option(
+    "--list-chats",
+    is_flag=True,
+    default=False,
+    help="List all available chats/conversations",
 )
 @click.option("--old", type=click.Path(), help="Path to previous export to merge with")
 @click.option(
@@ -511,7 +518,14 @@ def merge_with_old(dest, old):
     help="Whether to manually decrypt the db",
 )
 def main(
-    dest, old=None, source=None, overwrite=False, verbose=False, manual=False, chat=None
+    dest,
+    old=None,
+    source=None,
+    overwrite=False,
+    verbose=False,
+    manual=False,
+    chats=None,
+    list_chats=None,
 ):
     """
     Read the Signal directory and output attachments and chat files to DEST directory.
@@ -536,8 +550,8 @@ def main(
     source = src / "config.json"
     db_file = src / "sql" / "db.sqlite"
 
-    if chat:
-        chat = chat.split(",")
+    if chats:
+        chats = chats.split(",")
 
     dest = Path(dest).expanduser()
     if not dest.is_dir():
@@ -559,7 +573,11 @@ def main(
         sys.exit(1)
 
     print(f"\nFetching data from {db_file}")
-    convos, contacts = fetch_data(db_file, key, manual=manual, chat=chat)
+    convos, contacts = fetch_data(db_file, key, manual=manual, chats=chats)
+    if list_chats:
+        print("\n".join(sorted((v["name"] for v in contacts.values()))))
+        return
+
     contacts = fix_names(contacts)
     print("\nCopying and renaming attachments")
     copy_attachments(src, dest, convos, contacts)
