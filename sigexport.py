@@ -123,6 +123,7 @@ def make_simple(dest, conversations, contacts):
             body = body.replace("`", "")  # stop md code sections forming
             body += "  "  # so that markdown newlines
 
+            sender = "No-Sender"
             if "type" in msg.keys() and msg["type"] == "outgoing":
                 sender = "Me"
             else:
@@ -137,7 +138,6 @@ def make_simple(dest, conversations, contacts):
                 except KeyError:
                     if log:
                         print(f"\t\tNo sender:\t\t{date}")
-                    sender = "No-Sender"
 
             try:
                 attachments = msg["attachments"]
