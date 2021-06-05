@@ -575,7 +575,8 @@ def main(
     print(f"\nFetching data from {db_file}")
     convos, contacts = fetch_data(db_file, key, manual=manual, chats=chats)
     if list_chats:
-        print("\n".join(sorted((v["name"] for v in contacts.values()))))
+        names = sorted(v["name"] for v in contacts.values() if v["name"] is not None)
+        print("\n".join(names))
         return
 
     contacts = fix_names(contacts)
