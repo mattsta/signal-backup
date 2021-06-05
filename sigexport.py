@@ -58,9 +58,13 @@ def copy_attachments(src, dest, conversations, contacts):
                     )
                     for i, att in enumerate(attachments):
                         try:
-                            att["fileName"] = f"{date}_{i:02}_{att['fileName']}".replace(
+                            att[
+                                "fileName"
+                            ] = f"{date}_{i:02}_{att['fileName']}".replace(
                                 " ", "_"
-                            ).replace("/", "-")
+                            ).replace(
+                                "/", "-"
+                            )
                             # account for erroneous backslash in path
                             att_path = str(att["path"]).replace("\\", "/")
                             shutil.copy2(
@@ -479,13 +483,12 @@ def merge_with_old(dest, old):
 
 
 @click.command()
-@click.argument("dest", type=click.Path())
+@click.argument("dest", type=click.Path(), default="output")
 @click.option(
     "--source", "-s", type=click.Path(), help="Path to Signal source and database"
 )
 @click.option(
     "--chats",
-    "--chat",
     "-c",
     help="Comma-separated chat names to include. These are contact names or group names",
 )
@@ -493,7 +496,7 @@ def merge_with_old(dest, old):
     "--list-chats",
     is_flag=True,
     default=False,
-    help="List all available chats/conversations",
+    help="List all available chats/conversations and then quit",
 )
 @click.option("--old", type=click.Path(), help="Path to previous export to merge with")
 @click.option(
@@ -531,7 +534,7 @@ def main(
     Read the Signal directory and output attachments and chat files to DEST directory.
     Assumes the following default directories, can be overridden wtih --source.
 
-    Deafault for DEST is a sub-directory output/ in the current directory.
+    Default for DEST is a sub-directory output/ in the current directory.
 
     \b
     Default Signal directories:
@@ -553,17 +556,6 @@ def main(
     if chats:
         chats = chats.split(",")
 
-    dest = Path(dest).expanduser()
-    if not dest.is_dir():
-        dest.mkdir(parents=True)
-    elif overwrite:
-        shutil.rmtree(dest)
-        dest.mkdir(parents=True)
-    else:
-        print("Output folder already exists, didn't do anything!")
-        print("Use --overwrite to ignore existing directory.")
-        sys.exit(1)
-
     # Read sqlcipher key from Signal config file
     if source.is_file():
         with open(source, "r") as conf:
@@ -572,12 +564,25 @@ def main(
         print(f"Error: {source} not found in directory {src}")
         sys.exit(1)
 
-    print(f"\nFetching data from {db_file}")
+    if log:
+        print(f"\nFetching data from {db_file}\n")
     convos, contacts = fetch_data(db_file, key, manual=manual, chats=chats)
+
     if list_chats:
         names = sorted(v["name"] for v in contacts.values() if v["name"] is not None)
         print("\n".join(names))
-        return
+        sys.exit()
+
+    dest = Path(dest).expanduser()
+    if not dest.is_dir():
+        dest.mkdir(parents=True)
+    elif overwrite:
+        shutil.rmtree(dest)
+        dest.mkdir(parents=True)
+    else:
+        print(f"Output folder '{dest}' already exists, didn't do anything!")
+        print("Use --overwrite to ignore existing directory.")
+        sys.exit(1)
 
     contacts = fix_names(contacts)
     print("\nCopying and renaming attachments")
