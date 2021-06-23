@@ -50,6 +50,11 @@ The following should work:
 ./sigexport.py outputdir
 ```
 
+To create HTML with no pagination:
+```
+./sigexport.py outputdir -p0
+```
+
 If you get an error:
 
     pysqlcipher3.dbapi2.DatabaseError: file is not a database
@@ -61,15 +66,19 @@ The full options are below:
 Usage: ./sigexport.py [OPTIONS] [DEST]
 
 Options:
-  -s, --source PATH  Path to Signal config and database
-      --old PATH     Path to previous export to merge with
-  -c, --chats "NAME"  Comma-separated chat names to include. These are contact names or group names
-  --list-chats              List all available chats/conversations
-  --old PATH         Path to previous export to merge with
-  -o, --overwrite    Flag to overwrite existing output
-  -m, --manual       Flag to manually decrypt the database
-  -v, --verbose      Enable verbose output logging
-  --help             Show this message and exit.
+  -s, --source PATH       Path to Signal source and database
+  -c, --chats TEXT        Comma-separated chat names to include. These are
+                          contact names or group names
+
+  -p, --paginate INTEGER  Number of messages per page in the HTML output. Set
+                          to 0 for no pagination. Defaults to 100.
+
+  --list-chats            List all available chats/conversations and then quit
+  --old PATH              Path to previous export to merge with
+  -o, --overwrite         Flag to overwrite existing output
+  -v, --verbose           Enable verbose output logging
+  -m, --manual            Whether to manually decrypt the db
+  --help                  Show this message and exit.
 ```
 
 You can add `--source /path/to/source/dir/` if the script doesn't manage to find the Signal config location. Default locations per OS are below. The directory should contain a folder called `sql` with a `db.sqlite` inside it.

@@ -493,6 +493,13 @@ def merge_with_old(dest, old):
     help="Comma-separated chat names to include. These are contact names or group names",
 )
 @click.option(
+    "--paginate",
+    "-p",
+    type=click.INT,
+    default=100,
+    help="Number of messages per page in the HTML output. Set to 0 for no pagination. Defaults to 100.",
+)
+@click.option(
     "--list-chats",
     is_flag=True,
     default=False,
@@ -528,6 +535,7 @@ def main(
     verbose=False,
     manual=False,
     chats=None,
+    paginate=None,
     list_chats=None,
 ):
     """
@@ -594,7 +602,9 @@ def main(
         print("No existing files will be deleted or overwritten!")
         merge_with_old(dest, Path(old))
     print("\nCreating HTML files")
-    create_html(dest)
+    if paginate <= 0:
+        paginate = int(1e20)
+    create_html(dest, msgs_per_page=paginate)
 
     print(f"\nDone! Files exported to {dest}.\n")
 
