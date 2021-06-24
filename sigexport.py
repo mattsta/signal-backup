@@ -100,13 +100,17 @@ def make_simple(dest, conversations, contacts):
         mdfile = open(dest / name / "index.md", "a")
 
         for msg in messages:
-            try:
-                timestamp = msg["timestamp"]
-            except KeyError:
-                timestamp = msg["sent_at"]
-                if log:
-                    print("\t\tNo timestamp; use sent_at")
+            timestamp = (
+                msg["timestamp"]
+                if "timestamp" in msg
+                else msg["sent_at"]
+                if "sent_at" in msg
+                else None
+            )
+
             if timestamp is None:
+                if log:
+                    print("\t\tNo timestamp or sent_at; date set to 1970")
                 date = "1970-01-01 00:00"
             else:
                 date = datetime.fromtimestamp(timestamp / 1000.0).strftime(
