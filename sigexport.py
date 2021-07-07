@@ -7,6 +7,7 @@ import shutil
 from pathlib import Path
 from datetime import datetime
 import re
+import sqlite3
 
 import click
 from pysqlcipher3 import dbapi2 as sqlcipher
@@ -180,6 +181,8 @@ def fetch_data(db_file, key, manual=False, chats=None):
 
     db_file_decrypted = db_file.parents[0] / "db-decrypt.sqlite"
     if manual:
+        if log:
+            print(f"Manually decrypting db to {db_file_decrypted}")
         if db_file_decrypted.exists():
             db_file_decrypted.unlink()
         command = (
@@ -191,7 +194,8 @@ def fetch_data(db_file, key, manual=False, chats=None):
             f'" | sqlcipher {db_file}'
         )
         os.system(command)
-        db = sqlcipher.connect(str(db_file_decrypted))
+        # use sqlite instead of sqlcipher as DB already decrypted
+        db = sqlite3.connect(str(db_file_decrypted))
         c = db.cursor()
         c2 = db.cursor()
     else:
