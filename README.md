@@ -44,6 +44,9 @@ sudo make install
 - Install [Homebrew](https://brew.sh).
 - Run `brew install openssl sqlcipher`
 
+### For Windows
+YMMV, but apparently Ubuntu 20.04 on WSL2 should work! That is, install WSL2 and Ubuntu 20.04 on Windows, and then follow the **For Linux** instructions and feel your way forward.
+
 ## Usage
 The following should work:
 ```
