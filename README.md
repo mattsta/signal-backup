@@ -1,4 +1,6 @@
 # signal-export
+⚠️ **NB** Currently unsure if this works with Android-based accounts. If you use Android and it does/doesn't work, please let us know [here](https://github.com/carderne/signal-export/issues/26)!
+
 Export chats from the [Signal](https://www.signal.org/) [Desktop app](https://www.signal.org/download/) to Markdown and HTML files with attachments. Each chat is exported as an individual .md/.html file and the attachments for each are stored in a separate folder. Attachments are linked from the Markdown files and displayed in the HTML (pictures, videos, voice notes).
 
 Currently this seems to be the only way to get chat history out of Signal!
