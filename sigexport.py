@@ -8,6 +8,7 @@ from pathlib import Path
 from datetime import datetime
 import re
 import sqlite3
+import emoji
 
 import click
 from pysqlcipher3 import dbapi2 as sqlcipher
@@ -217,7 +218,7 @@ def fetch_data(db_file, key, manual=False, chats=None):
     c.execute(query)
     for result in c:
         if log:
-            print(f"\tLoading SQL results for: {result[3]}")
+            print(f"\tLoading SQL results for: {result[3]}, aka {result[4]}")
         is_group = result[0] == "group"
         cid = result[1]
         contacts[cid] = {
@@ -261,12 +262,26 @@ def fetch_data(db_file, key, manual=False, chats=None):
 
 
 def fix_names(contacts):
-    """Remove non-filesystem-friendly characters from names."""
-
+    """Convert contact names to filesystem-friendly."""
+    fixed_contact_names = set()
     for key, item in contacts.items():
         contact_name = item["number"] if item["name"] is None else item["name"]
         if contacts[key]["name"] is not None:
-            contacts[key]["name"] = "".join(x for x in contact_name if x.isalnum())
+            contacts[key]["name"] = "".join(
+                x for x in emoji.demojize(contact_name) if x.isalnum()
+            )
+            if contacts[key]["name"] == "":
+                contacts[key]["name"] = "unnamed"
+            fixed_contact_name = contacts[key]["name"]
+            if fixed_contact_name in fixed_contact_names:
+                name_differentiating_number = 2
+                while (
+                    fixed_contact_name + str(name_differentiating_number)
+                ) in fixed_contact_names:
+                    name_differentiating_number += 1
+                fixed_contact_name += str(name_differentiating_number)
+                contacts[key]["name"] = fixed_contact_name
+            fixed_contact_names.add(fixed_contact_name)
 
     return contacts
 
