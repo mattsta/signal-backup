@@ -52,38 +52,32 @@ def copy_attachments(src, dest, conversations, contacts):
         contact_path = dest / name / "media"
         contact_path.mkdir(exist_ok=True, parents=True)
         for msg in messages:
-            try:
+            if "attachments" in msg and msg["attachments"]:
                 attachments = msg["attachments"]
-                if attachments:
-                    date = datetime.fromtimestamp(msg["timestamp"] / 1000.0).isoformat()
-                    for i, att in enumerate(attachments):
-                        try:
-                            # Account for no fileName key
-                            file_name = (
-                                str(att["fileName"]) if "fileName" in att else "None"
-                            )
-                            # Sometimes the key is there but it is None, needs extension
-                            if "." not in file_name:
-                                file_name += "." + att["contentType"].split("/")[1]
-                            att["fileName"] = f"{date}_{i:02}_{file_name}".replace(
-                                " ", "_"
-                            ).replace("/", "-")
-                            # account for erroneous backslash in path
-                            att_path = str(att["path"]).replace("\\", "/")
-                            shutil.copy2(
-                                src_att / att_path, contact_path / att["fileName"]
-                            )
-                        except KeyError:
-                            if log:
-                                print(f"\t\tBroken attachment:\t{name}\t{att['path']}")
-                        except FileNotFoundError:
-                            if log:
-                                print(
-                                    f"\t\tAttachment not found:\t{name} {att['path']}"
-                                )
-            except KeyError:
-                if log:
-                    print(f"\t\tNo attachments for a message: {name}")
+                date = datetime.fromtimestamp(msg["timestamp"] / 1000.0).isoformat()
+                for i, att in enumerate(attachments):
+                    try:
+                        # Account for no fileName key
+                        file_name = (
+                            str(att["fileName"]) if "fileName" in att else "None"
+                        )
+                        # Sometimes the key is there but it is None, needs extension
+                        if "." not in file_name:
+                            file_name += "." + att["contentType"].split("/")[1]
+                        att["fileName"] = f"{date}_{i:02}_{file_name}".replace(
+                            " ", "_"
+                        ).replace("/", "-")
+                        # account for erroneous backslash in path
+                        att_path = str(att["path"]).replace("\\", "/")
+                        shutil.copy2(src_att / att_path, contact_path / att["fileName"])
+                    except KeyError:
+                        if log:
+                            print(f"\t\tBroken attachment:\t{name}\t{att['path']}")
+                    except FileNotFoundError:
+                        if log:
+                            print(f"\t\tAttachment not found:\t{name} {att['path']}")
+            else:
+                msg["attachments"] = []
 
 
 def make_simple(dest, conversations, contacts):
@@ -156,26 +150,21 @@ def make_simple(dest, conversations, contacts):
                     if log:
                         print(f"\t\tNo sender:\t\t{date}")
 
-            try:
-                attachments = msg["attachments"]
-                for att in attachments:
-                    file_name = att["fileName"]
-                    path = Path("media") / file_name
-                    path = Path(str(path).replace(" ", "%20"))
-                    if path.suffix and path.suffix.split(".")[1] in [
-                        "png",
-                        "jpg",
-                        "jpeg",
-                        "gif",
-                        "tif",
-                        "tiff",
-                    ]:
-                        body += "!"
-                    body += f"[{file_name}](./{path})  "
-                print(f"[{date}] {sender}: {body}", file=mdfile)
-            except KeyError:
-                if log:
-                    print(f"\t\tNo attachments for a message: {name}, {date}")
+            for att in msg["attachments"]:
+                file_name = att["fileName"]
+                path = Path("media") / file_name
+                path = Path(str(path).replace(" ", "%20"))
+                if path.suffix and path.suffix.split(".")[1] in [
+                    "png",
+                    "jpg",
+                    "jpeg",
+                    "gif",
+                    "tif",
+                    "tiff",
+                ]:
+                    body += "!"
+                body += f"[{file_name}](./{path})  "
+            print(f"[{date}] {sender}: {body}", file=mdfile)
 
 
 def fetch_data(db_file, key, manual=False, chats=None):
@@ -524,7 +513,7 @@ def merge_with_old(dest, old):
     "-p",
     type=click.INT,
     default=100,
-    help="Number of messages per page in the HTML output. Set to 0 for no pagination. Defaults to 100.",
+    help="Number messages per page in HTML. Set to 0 for no pagination. Defaults to 100.",
 )
 @click.option(
     "--list-chats",
