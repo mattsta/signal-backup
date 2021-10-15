@@ -164,6 +164,14 @@ def make_simple(dest, conversations, contacts):
                 ]:
                     body += "!"
                 body += f"[{file_name}](./{path})  "
+
+            if "reactions" in msg and msg["reactions"]:
+                reactions = [
+                    f"{contacts[r['fromId']]['name']}: {r['emoji']}"
+                    for r in msg["reactions"]
+                ]
+                body += "\n(- " + ", ".join(reactions) + " -)"
+
             print(f"[{date}] {sender}: {body}", file=mdfile)
 
 
@@ -344,6 +352,13 @@ def create_html(dest, msgs_per_page=100):
                 date, sender, body = msg
                 sender = sender[1:-1]
                 date, time = date[1:-1].replace(",", "").split(" ")
+
+                # reactions
+                p = re.compile(r"\(- (.*) -\)")
+                m = p.search(body)
+                reactions = m.groups()[0].replace(",", "") if m else ""
+                body = p.sub("", body)
+
                 body = md.convert(body)
 
                 # links
@@ -388,9 +403,11 @@ def create_html(dest, msgs_per_page=100):
                 cl = "msg me" if sender == "Me" else "msg"
                 print(
                     f"<div class='{cl}'><span class=date>{date}</span>"
-                    f"<span class=time>{time}</span>",
+                    f"<span class=time>{time}</span>"
                     f"<span class=sender>{sender}</span>"
-                    f"<span class=body>{soup.prettify()}</span></div>",
+                    f"<span class=body>{soup.prettify()}</span>"
+                    f"<span class=reaction>{reactions}</span>"
+                    "</div>",
                     file=htfile,
                 )
             print("</div>", file=htfile)
