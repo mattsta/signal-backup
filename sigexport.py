@@ -55,18 +55,19 @@ def copy_attachments(src, dest, conversations, contacts):
             try:
                 attachments = msg["attachments"]
                 if attachments:
-                    date = datetime.fromtimestamp(msg["timestamp"] / 1000.0).strftime(
-                        "%Y-%m-%d"
-                    )
+                    date = datetime.fromtimestamp(msg["timestamp"] / 1000.0).isoformat()
                     for i, att in enumerate(attachments):
                         try:
-                            att[
-                                "fileName"
-                            ] = f"{date}_{i:02}_{att['fileName']}".replace(
-                                " ", "_"
-                            ).replace(
-                                "/", "-"
+                            # Account for no fileName key
+                            file_name = (
+                                str(att["fileName"]) if "fileName" in att else "None"
                             )
+                            # Sometimes the key is there but it is None, needs extension
+                            if "." not in file_name:
+                                file_name += "." + att["contentType"].split("/")[1]
+                            att["fileName"] = f"{date}_{i:02}_{file_name}".replace(
+                                " ", "_"
+                            ).replace("/", "-")
                             # account for erroneous backslash in path
                             att_path = str(att["path"]).replace("\\", "/")
                             shutil.copy2(
@@ -74,13 +75,11 @@ def copy_attachments(src, dest, conversations, contacts):
                             )
                         except KeyError:
                             if log:
-                                print(
-                                    f"\t\tBroken attachment:\t{name}\t{att['fileName']}"
-                                )
+                                print(f"\t\tBroken attachment:\t{name}\t{att['path']}")
                         except FileNotFoundError:
                             if log:
                                 print(
-                                    f"\t\tAttachment not found:\t{name} {att['fileName']}"
+                                    f"\t\tAttachment not found:\t{name} {att['path']}"
                                 )
             except KeyError:
                 if log:
@@ -153,9 +152,6 @@ def make_simple(dest, conversations, contacts):
                 attachments = msg["attachments"]
                 for att in attachments:
                     file_name = att["fileName"]
-                    # some file names are None
-                    if file_name is None:
-                        file_name = "None"
                     path = Path("media") / file_name
                     path = Path(str(path).replace(" ", "%20"))
                     if path.suffix and path.suffix.split(".")[1] in [
