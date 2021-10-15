@@ -102,10 +102,10 @@ def make_simple(dest, conversations, contacts):
 
         for msg in messages:
             timestamp = (
-                msg["timestamp"]
-                if "timestamp" in msg
-                else msg["sent_at"]
+                msg["sent_at"]
                 if "sent_at" in msg
+                else msg["timestamp"]
+                if "timestamp" in msg
                 else None
             )
 
