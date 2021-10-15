@@ -122,10 +122,18 @@ def make_simple(dest, conversations, contacts):
                 print(f"\t\tDoing {name}, msg: {date}")
 
             try:
-                body = msg["body"]
+                if msg["type"] == "call-history":
+                    body = (
+                        "Incoming call"
+                        if msg["callHistoryDetails"]["wasIncoming"]
+                        else "Outgoing call"
+                    )
+                else:
+                    body = msg["body"]
             except KeyError:
                 if log:
                     print(f"\t\tNo body:\t\t{date}")
+                    ...
                 body = ""
             if body is None:
                 body = ""
