@@ -166,10 +166,18 @@ def make_simple(dest, conversations, contacts):
                 body += f"[{file_name}](./{path})  "
 
             if "reactions" in msg and msg["reactions"]:
-                reactions = [
-                    f"{contacts[r['fromId']]['name']}: {r['emoji']}"
-                    for r in msg["reactions"]
-                ]
+                reactions = []
+                for r in msg["reactions"]:
+                    try:
+                        reactions.append(
+                            f"{contacts[r['fromId']]['name']}: {r['emoji']}"
+                        )
+                    except KeyError:
+                        if log:
+                            print(
+                                f"\t\tReaction fromId not found in contacts: "
+                                f"[{date}] {sender}: {r}"
+                            )
                 body += "\n(- " + ", ".join(reactions) + " -)"
 
             print(f"[{date}] {sender}: {body}", file=mdfile)
