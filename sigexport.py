@@ -11,7 +11,6 @@ import sqlite3
 import emoji
 from typing import Optional
 
-import typer
 from typer import run, echo, Option
 
 from pysqlcipher3 import dbapi2 as sqlcipher
@@ -529,15 +528,21 @@ def main(
     dest: Path,
     source: Optional[Path] = Option(None, help="Path to Signal source database"),
     old: Optional[Path] = Option(None, help="Path to previous export to merge"),
-    overwrite: bool = Option(False, "--overwrite", "-o", help="Overwrite existing output"),
+    overwrite: bool = Option(
+        False, "--overwrite", "-o", help="Overwrite existing output"
+    ),
     paginate: int = Option(
         100, "--paginate", "-p", help="Messages per page in HTML; set to 0 for infinite"
     ),
     chats: str = Option(
         None, help="Comma-separated chat names to include: contact names or group names"
     ),
-    list_chats: bool = Option(False, "--list-chats", "-l", help="List available chats and exit"),
-    manual: bool = Option(False, "--manual", "-m", help="Attempt to manually decrypt DB"),
+    list_chats: bool = Option(
+        False, "--list-chats", "-l", help="List available chats and exit"
+    ),
+    manual: bool = Option(
+        False, "--manual", "-m", help="Attempt to manually decrypt DB"
+    ),
     verbose: bool = Option(False, "--verbose", "-v"),
 ):
     """
@@ -561,8 +566,9 @@ def main(
     source = src / "config.json"
     db_file = src / "sql" / "db.sqlite"
 
+    from typing import List
     if chats:
-        chats = chats.split(",")
+        chats_list: List[str] = chats.split(",")
 
     # Read sqlcipher key from Signal config file
     if source.is_file():
@@ -574,7 +580,7 @@ def main(
 
     if log:
         echo(f"\nFetching data from {db_file}\n")
-    convos, contacts = fetch_data(db_file, key, manual=manual, chats=chats)
+    convos, contacts = fetch_data(db_file, key, manual=manual, chats=chats_list)
 
     if list_chats:
         names = sorted(v["name"] for v in contacts.values() if v["name"] is not None)

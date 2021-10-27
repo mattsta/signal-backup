@@ -18,11 +18,9 @@ Images are attached inline with `![name](path)` while other attachments (voice n
 This is converted to HTML at the end so it can be opened with any web browser. The stylesheet `.css` is still very basic but I'll get to it sooner or later.
 
 ## Installation
-First clone and install requirements (preferably into a virtualenv):
+Install sigexport from GitHub:
 ```
-git clone https://github.com/carderne/signal-export.git
-cd signal-export
-pip install -r requirements.txt
+pip install git+https://github.com/carderne/signal-export.git
 ```
 
 ### For Linux
@@ -92,3 +90,16 @@ You can add `--source /path/to/source/dir/` if the script doesn't manage to find
 - Windows: `~/AppData/Roaming/Signal/`
 
 You can also use `--old /previously/exported/dir/` to merge the new export with a previous one. _Nothing will be overwritten!_ It will put the combined results in whatever output directory you specified and leave your previos export untouched. Exercise is left to the reader to verify that all went well before deleting the previous one.
+
+## Development
+```
+git clone https://github.com/carderne/signal-export.git
+cd signal-export
+pip install -e .[dev]
+pre-commit install
+```
+
+Run tests with:
+```
+tox
+```
