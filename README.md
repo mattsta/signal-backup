@@ -49,12 +49,12 @@ YMMV, but apparently Ubuntu 20.04 on WSL2 should work! That is, install WSL2 and
 ## Usage
 The following should work:
 ```
-./sigexport.py outputdir
+sigexport outputdir
 ```
 
 To create HTML with no pagination:
 ```
-./sigexport.py outputdir -p0
+sigexport outputdir -p0
 ```
 
 If you get an error:
@@ -65,7 +65,7 @@ try adding the `--manual` option.
 
 The full options are below:
 ```
-Usage: sigexport.py [OPTIONS] DEST
+Usage: sigexport [OPTIONS] DEST
 
 Arguments:
   DEST  [required]
