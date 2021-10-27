@@ -1,5 +1,5 @@
-beautifulsoup4
-Click>=7.0
+beautifulsoup4>=4.8.2
+typer-cli>=0.0.12
 emoji>=1.4.2
 Markdown>=3.0
 pysqlcipher3>=1.0.3

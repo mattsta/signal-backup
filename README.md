@@ -67,21 +67,22 @@ try adding the `--manual` option.
 
 The full options are below:
 ```
-Usage: ./sigexport.py [OPTIONS] [DEST]
+Usage: sigexport.py [OPTIONS] DEST
+
+Arguments:
+  DEST  [required]
 
 Options:
-  -s, --source PATH       Path to Signal source and database
-  -c, --chats TEXT        Comma-separated chat names to include. These are
-                          contact names or group names
-
-  -p, --paginate INTEGER  Number of messages per page in the HTML output. Set
-                          to 0 for no pagination. Defaults to 100.
-
-  --list-chats            List all available chats/conversations and then quit
-  --old PATH              Path to previous export to merge with
-  -o, --overwrite         Flag to overwrite existing output
-  -v, --verbose           Enable verbose output logging
-  -m, --manual            Whether to manually decrypt the db
+  --source PATH           Path to Signal source database
+  --old PATH              Path to previous export to merge
+  -o, --overwrite         Overwrite existing output  [default: False]
+  -p, --paginate INTEGER  Messages per page in HTML; set to 0 for infinite
+                          [default: 100]
+  --chats TEXT            Comma-separated chat names to include: contact names
+                          or group names
+  -l, --list-chats        List available chats and exit  [default: False]
+  -m, --manual            Attempt to manually decrypt DB  [default: False]
+  -v, --verbose           [default: False]
   --help                  Show this message and exit.
 ```
 
