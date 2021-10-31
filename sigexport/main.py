@@ -1,4 +1,5 @@
 import json
+from typing import List
 import sys
 import os
 import shutil
@@ -9,7 +10,7 @@ import sqlite3
 import emoji
 from typing import Optional
 
-from typer import run, echo, Option
+from typer import run, echo, Option, Argument
 
 from pysqlcipher3 import dbapi2 as sqlcipher
 import markdown
@@ -221,7 +222,7 @@ def fetch_data(db_file, key, manual=False, chats=None):
 
     query = "SELECT type, id, e164, name, profileName, members FROM conversations"
     if chats is not None:
-        chats = '","'.join(chats)
+        chats = chats.replace(",", '","')
         query = query + f' WHERE name IN ("{chats}") OR profileName IN ("{chats}")'
     c.execute(query)
     for result in c:
@@ -523,7 +524,7 @@ def merge_with_old(dest, old):
 
 
 def main(
-    dest: Path,
+    dest: Path = Argument(Path("output")),
     source: Optional[Path] = Option(None, help="Path to Signal source database"),
     old: Optional[Path] = Option(None, help="Path to previous export to merge"),
     overwrite: bool = Option(
@@ -564,11 +565,6 @@ def main(
     source = src / "config.json"
     db_file = src / "sql" / "db.sqlite"
 
-    from typing import List
-
-    if chats:
-        chats_list: List[str] = chats.split(",")
-
     # Read sqlcipher key from Signal config file
     if source.is_file():
         with open(source, "r") as conf:
@@ -579,7 +575,7 @@ def main(
 
     if log:
         echo(f"\nFetching data from {db_file}\n")
-    convos, contacts = fetch_data(db_file, key, manual=manual, chats=chats_list)
+    convos, contacts = fetch_data(db_file, key, manual=manual, chats=chats)
 
     if list_chats:
         names = sorted(v["name"] for v in contacts.values() if v["name"] is not None)
