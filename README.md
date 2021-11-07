@@ -18,10 +18,7 @@ Images are attached inline with `![name](path)` while other attachments (voice n
 This is converted to HTML at the end so it can be opened with any web browser. The stylesheet `.css` is still very basic but I'll get to it sooner or later.
 
 ## Installation
-Install sigexport from GitHub:
-```
-pip install git+https://github.com/carderne/signal-export.git
-```
+Before you can install `signal-export`, you need to get `sqlcipher` working. Follow the instructions for your OS:
 
 ### For Linux
 
@@ -45,6 +42,12 @@ sudo make install
 
 ### For Windows
 YMMV, but apparently Ubuntu 20.04 on WSL2 should work! That is, install WSL2 and Ubuntu 20.04 on Windows, and then follow the **For Linux** instructions and feel your way forward.
+
+### Install signal-export
+Install signal-export from GitHub:
+```
+pip install git+https://github.com/carderne/signal-export.git
+```
 
 ## Usage
 The following should work:
