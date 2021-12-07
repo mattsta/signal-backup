@@ -585,8 +585,7 @@ def main(
     if not dest.is_dir():
         dest.mkdir(parents=True)
     elif overwrite:
-        shutil.rmtree(dest)
-        dest.mkdir(parents=True)
+        dest.mkdir(parents=True, exist_ok=True)
     else:
         echo(f"Output folder '{dest}' already exists, didn't do anything!")
         echo("Use --overwrite to ignore existing directory.")
