@@ -26,16 +26,14 @@ First off, [install Docker](https://docs.docker.com/get-docker/).
 Then set your input location depending on your OS.
 It could even be something different from the below, so figure it out!
 ```bash
+# Only enter on of these!
 SIGNAL_INPUT=~/.config/Signal                         # Linux
 SIGNAL_INPUT="~/Library/Application Support/Signal"   # macOS
 SIGNAL_INPUT="~/AppData/Roaming/Signal"               # Windows
-```
 
-And your output location (again, just use one of these!).
-You can't just specify a subdirectory or Docker will complain!
-```bash
-SIGNAL_OUTPUT=~/Documents/output     # specify relative to home dir
-SIGNAL_OUTPUT=/path/to/output        # or specify the full path
+# And your output location
+# You must specify the full path or Docker will complain!
+SIGNAL_OUTPUT=~/Documents/output
 ```
 
 Then run the following command:
@@ -55,23 +53,7 @@ docker run --rm -it --name signal-export \
 ```
 
 #### A helpful shortcut
-If you want to make your life even easier, then add the following snippet to your `.bashrc` (or equivalent):
-```bash
-signalexport () {
-    if [[ -z "$1" || -z "$2" ]]; then
-        echo 'Must provide input path and input path as first two parameters'
-        echo 'e.g. signalexport ~/.config/Signal output/'
-    else
-        input=$(readlink -f $1)
-        output=$(readlink -f $2)
-        shift 2
-        docker run --rm -it --name signal-export \
-          -v $input:/Signal \
-          -v $output:/output \
-          carderne/signal-export:latest $@
-    fi
-}
-```
+If you want to make your life even easier, then copy the contents from [helper.sh](./helper.sh) into your `.bashrc` (or equivalent). It will detect your OS and try to guess the Signal input location, and let you skip some of the Docker boilerplate from above. If it guesses the input wrong, just edit it to hard-code the correct location!
 
 Then resource your `.bashrc` as follows:
 ```bash
@@ -81,7 +63,7 @@ source ~/.bashrc
 And then you can simply run the following.
 (And have some Docker annoyances ironed out).
 ```bash
-signalexport ~/.config/Signal output --overwrite --chats=Jim
+signalexport output --chats=Jim
 ```
 
 ### 🦆 Slightly harder: build your own Docker image
@@ -95,7 +77,9 @@ docker build -t carderne/signal-export:latest .
 
 (You can obviously give it a different name and drop the `carderne` bit!)
 
-### 🌋 Hard mode: install stuff
+From then you can follow the same Docker instructions from above.
+
+### 🌋 Hard mode: actually install stuff
 This involves actually installing the stuff into your system, but has proven hard to get work for many, especially on Windows.
 
 Before you can install `signal-export`, you need to get `sqlcipher` working.

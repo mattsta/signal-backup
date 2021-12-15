@@ -9,7 +9,7 @@ import sqlite3
 import emoji
 from typing import Optional
 
-from typer import run, echo, Option, Argument
+from typer import run, secho, Option, Argument, colors
 
 from pysqlcipher3 import dbapi2 as sqlcipher
 import markdown
@@ -30,7 +30,7 @@ def source_location():
     elif sys.platform == "win32":
         source_path = home / "AppData/Roaming/Signal"
     else:
-        echo("Please manually enter Signal location using --source.")
+        secho("Please manually enter Signal location using --source.")
         sys.exit(1)
 
     return source_path
@@ -45,7 +45,7 @@ def copy_attachments(src, dest, conversations, contacts):
     for key, messages in conversations.items():
         name = contacts[key]["name"]
         if log:
-            echo(f"\tCopying attachments for: {name}")
+            secho(f"\tCopying attachments for: {name}")
         # some contact names are None
         if name is None:
             name = "None"
@@ -72,10 +72,10 @@ def copy_attachments(src, dest, conversations, contacts):
                         shutil.copy2(src_att / att_path, contact_path / att["fileName"])
                     except KeyError:
                         if log:
-                            echo(f"\t\tBroken attachment:\t{name}\t{att['path']}")
+                            secho(f"\t\tBroken attachment:\t{name}\t{att['path']}")
                     except FileNotFoundError:
                         if log:
-                            echo(f"\t\tAttachment not found:\t{name} {att['path']}")
+                            secho(f"\t\tAttachment not found:\t{name} {att['path']}")
             else:
                 msg["attachments"] = []
 
@@ -87,7 +87,7 @@ def make_simple(dest, conversations, contacts):
     for key, messages in conversations.items():
         name = contacts[key]["name"]
         if log:
-            echo(f"\tDoing markdown for: {name}")
+            secho(f"\tDoing markdown for: {name}")
         is_group = contacts[key]["is_group"]
         # some contact names are None
         if name is None:
@@ -105,7 +105,7 @@ def make_simple(dest, conversations, contacts):
 
             if timestamp is None:
                 if log:
-                    echo("\t\tNo timestamp or sent_at; date set to 1970")
+                    secho("\t\tNo timestamp or sent_at; date set to 1970")
                 date = "1970-01-01 00:00"
             else:
                 date = datetime.fromtimestamp(timestamp / 1000.0).strftime(
@@ -113,7 +113,7 @@ def make_simple(dest, conversations, contacts):
                 )
 
             if log:
-                echo(f"\t\tDoing {name}, msg: {date}")
+                secho(f"\t\tDoing {name}, msg: {date}")
 
             try:
                 if msg["type"] == "call-history":
@@ -126,7 +126,7 @@ def make_simple(dest, conversations, contacts):
                     body = msg["body"]
             except KeyError:
                 if log:
-                    echo(f"\t\tNo body:\t\t{date}")
+                    secho(f"\t\tNo body:\t\t{date}")
                 body = ""
             if body is None:
                 body = ""
@@ -147,7 +147,7 @@ def make_simple(dest, conversations, contacts):
                         sender = contacts[msg["conversationId"]]["name"]
                 except KeyError:
                     if log:
-                        echo(f"\t\tNo sender:\t\t{date}")
+                        secho(f"\t\tNo sender:\t\t{date}")
 
             for att in msg["attachments"]:
                 file_name = att["fileName"]
@@ -173,7 +173,7 @@ def make_simple(dest, conversations, contacts):
                         )
                     except KeyError:
                         if log:
-                            echo(
+                            secho(
                                 f"\t\tReaction fromId not found in contacts: "
                                 f"[{date}] {sender}: {r}"
                             )
@@ -191,11 +191,11 @@ def fetch_data(db_file, key, manual=False, chats=None):
     db_file_decrypted = db_file.parents[0] / "db-decrypt.sqlite"
     if manual:
         if log:
-            echo(f"Manually decrypting db to {db_file_decrypted}")
+            secho(f"Manually decrypting db to {db_file_decrypted}")
         if db_file_decrypted.exists():
             db_file_decrypted.unlink()
         command = (
-            f'echo "'
+            f'secho "'
             f"PRAGMA key = \\\"x'{key}'\\\";"
             f"ATTACH DATABASE '{db_file_decrypted}' AS plaintext KEY '';"
             f"SELECT sqlcipher_export('plaintext');"
@@ -226,7 +226,7 @@ def fetch_data(db_file, key, manual=False, chats=None):
     c.execute(query)
     for result in c:
         if log:
-            echo(f"\tLoading SQL results for: {result[3]}, aka {result[4]}")
+            secho(f"\tLoading SQL results for: {result[3]}, aka {result[4]}")
         is_group = result[0] == "group"
         cid = result[1]
         contacts[cid] = {
@@ -245,7 +245,7 @@ def fetch_data(db_file, key, manual=False, chats=None):
             # Match group members from phone number to name
             if result[5] is None:
                 if log:
-                    echo("\tEmpty group.")
+                    secho("\tEmpty group.")
             else:
                 for member in result[5].split():
                     c2.execute(
@@ -301,7 +301,7 @@ def create_html(dest, msgs_per_page=100):
     if os.path.isfile(css_source):
         shutil.copy2(css_source, css_dest)
     else:
-        echo(
+        secho(
             f"Stylesheet ({css_source}) not found."
             f"You might want to install one manually at {css_dest}."
         )
@@ -312,7 +312,7 @@ def create_html(dest, msgs_per_page=100):
         if sub.is_dir():
             name = sub.stem
             if log:
-                echo(f"\tDoing html for {name}")
+                secho(f"\tDoing html for {name}")
             path = sub / "index.md"
             # touch first
             open(path, "a")
@@ -483,13 +483,13 @@ def merge_chat(path_new, path_old):
     try:
         a, b, c, d = old[0][:30], old[-1][:30], new[0][:30], new[-1][:30]
         if log:
-            echo(f"\t\tFirst line old:\t{a}")
-            echo(f"\t\tLast line old:\t{b}")
-            echo(f"\t\tFirst line new:\t{c}")
-            echo(f"\t\tLast line new:\t{d}")
+            secho(f"\t\tFirst line old:\t{a}")
+            secho(f"\t\tLast line old:\t{b}")
+            secho(f"\t\tFirst line new:\t{c}")
+            secho(f"\t\tLast line new:\t{d}")
     except IndexError:
         if log:
-            echo("\t\tNo new messages for this conversation")
+            secho("\t\tNo new messages for this conversation")
         return
 
     old = lines_to_msgs(old)
@@ -508,7 +508,7 @@ def merge_with_old(dest, old):
         if sub.is_dir():
             name = sub.stem
             if log:
-                echo(f"\tMerging {name}")
+                secho(f"\tMerging {name}")
             dir_old = old / name
             if dir_old.is_dir():
                 merge_attachments(sub / "media", dir_old / "media")
@@ -518,8 +518,8 @@ def merge_with_old(dest, old):
                     merge_chat(path_new, path_old)
                 except FileNotFoundError:
                     if log:
-                        echo(f"\tNo old for {name}")
-                echo()
+                        secho(f"\tNo old for {name}")
+                secho()
 
 
 def main(
@@ -569,43 +569,40 @@ def main(
         with open(source, "r") as conf:
             key = json.loads(conf.read())["key"]
     else:
-        echo(f"Error: {source} not found in directory {src}")
+        secho(f"Error: {source} not found in directory {src}")
         sys.exit(1)
 
     if log:
-        echo(f"\nFetching data from {db_file}\n")
+        secho(f"Fetching data from {db_file}\n")
     convos, contacts = fetch_data(db_file, key, manual=manual, chats=chats)
 
     if list_chats:
         names = sorted(v["name"] for v in contacts.values() if v["name"] is not None)
-        echo("\n".join(names))
+        secho("\n".join(names))
         sys.exit()
 
     dest = Path(dest).expanduser()
-    if not dest.is_dir():
-        dest.mkdir(parents=True)
-    elif overwrite:
+    if not dest.is_dir() or overwrite:
         dest.mkdir(parents=True, exist_ok=True)
     else:
-        echo(f"Output folder '{dest}' already exists, didn't do anything!")
-        echo("Use --overwrite (or -o) to ignore existing directory.")
+        secho(f"Output folder '{dest}' already exists, didn't do anything!", fg=colors.RED)
+        secho("Use --overwrite (or -o) to ignore existing directory.", fg=colors.RED)
         sys.exit(1)
 
     contacts = fix_names(contacts)
-    echo("\nCopying and renaming attachments")
+    secho("Copying and renaming attachments")
     copy_attachments(src, dest, convos, contacts)
-    echo("\nCreating markdown files")
+    secho("Creating markdown files")
     make_simple(dest, convos, contacts)
     if old:
-        echo(f"\nMerging old at {old} into output directory")
-        echo("No existing files will be deleted or overwritten!")
+        secho(f"Merging old at {old} into output directory")
+        secho("No existing files will be deleted or overwritten!")
         merge_with_old(dest, Path(old))
-    echo("\nCreating HTML files")
+    secho("Creating HTML files")
     if paginate <= 0:
         paginate = int(1e20)
     create_html(dest, msgs_per_page=paginate)
-
-    echo(f"\nDone! Files exported to {dest}.\n")
+    secho("Done!", fg=colors.GREEN)
 
 
 def cli():
