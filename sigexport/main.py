@@ -56,7 +56,7 @@ def copy_attachments(src, dest, conversations, contacts):
                 attachments = msg["attachments"]
                 date = (
                     datetime.fromtimestamp(msg["timestamp"] / 1000.0)
-                    .isoformat()
+                    .isoformat(timespec="milliseconds")
                     .replace(":", "-")
                 )
                 for i, att in enumerate(attachments):
@@ -68,9 +68,11 @@ def copy_attachments(src, dest, conversations, contacts):
                         # Sometimes the key is there but it is None, needs extension
                         if "." not in file_name:
                             file_name += "." + att["contentType"].split("/")[1]
-                        att["fileName"] = f"{date}_{i:02}_{file_name}".replace(
-                            " ", "_"
-                        ).replace("/", "-")
+                        att["fileName"] = (
+                            f"{date}_{i:02}_{file_name}".replace(" ", "_")
+                            .replace("/", "-")
+                            .replace(",", "")
+                        )
                         # account for erroneous backslash in path
                         att_path = str(att["path"]).replace("\\", "/")
                         shutil.copy2(src_att / att_path, contact_path / att["fileName"])
