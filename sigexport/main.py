@@ -72,6 +72,7 @@ def copy_attachments(src, dest, conversations, contacts):
                             f"{date}_{i:02}_{file_name}".replace(" ", "_")
                             .replace("/", "-")
                             .replace(",", "")
+                            .replace(":", "-")
                         )
                         # account for erroneous backslash in path
                         att_path = str(att["path"]).replace("\\", "/")
