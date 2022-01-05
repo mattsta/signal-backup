@@ -23,20 +23,19 @@ This tool has some pretty difficult dependencies, and so a generous contributor 
 
 First off, [install Docker](https://docs.docker.com/get-docker/).
 
-Then set your input location depending on your OS.
-It could even be something different from the below, so figure it out!
+Then set your input and output locations as environment variables.
 ```bash
-# Only enter on of these!
-SIGNAL_INPUT=~/.config/Signal                         # Linux
-SIGNAL_INPUT="~/Library/Application Support/Signal"   # macOS
-SIGNAL_INPUT="~/AppData/Roaming/Signal"               # Windows
+# Only enter one of these!
+SIGNAL_INPUT="~/.config/Signal"                     # Linux
+SIGNAL_INPUT="~/Library/Application Support/Signal" # macOS
+SIGNAL_INPUT="~/AppData/Roaming/Signal"             # Windows
 
 # And your output location
 # You must specify the full path or Docker will complain!
-SIGNAL_OUTPUT=~/Documents/output
+SIGNAL_OUTPUT="~/Documents/output"
 ```
 
-Then run the following command:
+Then run the following command, which pulls in the environment variables you set above.
 ```bash
 docker run --rm -it --name signal-export \
   -v ${SIGNAL_INPUT}:/Signal \
