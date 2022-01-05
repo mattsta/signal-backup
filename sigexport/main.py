@@ -84,7 +84,7 @@ def copy_attachments(src, dest, conversations, contacts):
                 msg["attachments"] = []
 
 
-def make_simple(dest, conversations, contacts):
+def make_simple(dest, conversations, contacts, add_quote=False):
     """Output each conversation into a simple text file."""
 
     dest = Path(dest)
@@ -186,7 +186,13 @@ def make_simple(dest, conversations, contacts):
                             )
                 body += "\n(- " + ", ".join(reactions) + " -)"
 
-            print(f"[{date}] {sender}: {body}", file=mdfile)
+            quote = ""
+            if add_quote and "quote" in msg and msg["quote"]:
+                quote = "\n>\n> "
+                quote += msg["quote"]["text"]
+                quote += "\n>\n"
+
+            print(f"[{date}] {sender}: {quote}{body}", file=mdfile)
 
 
 def fetch_data(db_file, key, manual=False, chats=None):
@@ -373,6 +379,16 @@ def create_html(dest, msgs_per_page=100):
                 reactions = m.groups()[0].replace(",", "") if m else ""
                 body = p.sub("", body)
 
+                # quote
+                p = re.compile(r">\n> (.*)\n>")
+                m = p.search(body)
+                if m:
+                    quote = m.groups()[0]
+                    quote = f"<div class=quote>{quote}</div>"
+                else:
+                    quote = ""
+                body = p.sub("", body)
+
                 body = md.convert(body)
 
                 # links
@@ -419,6 +435,7 @@ def create_html(dest, msgs_per_page=100):
                     f"<div class='{cl}'><span class=date>{date}</span>"
                     f"<span class=time>{time}</span>"
                     f"<span class=sender>{sender}</span>"
+                    f"{quote}"
                     f"<span class=body>{soup.prettify()}</span>"
                     f"<span class=reaction>{reactions}</span>"
                     "</div>",
@@ -536,6 +553,7 @@ def main(
     overwrite: bool = Option(
         False, "--overwrite", "-o", help="Overwrite existing output"
     ),
+    quote: bool = Option(False, "--quote", "-q", help="Include quote text"),
     paginate: int = Option(
         100, "--paginate", "-p", help="Messages per page in HTML; set to 0 for infinite"
     ),
@@ -602,7 +620,7 @@ def main(
     secho("Copying and renaming attachments")
     copy_attachments(src, dest, convos, contacts)
     secho("Creating markdown files")
-    make_simple(dest, convos, contacts)
+    make_simple(dest, convos, contacts, quote)
     if old:
         secho(f"Merging old at {old} into output directory")
         secho("No existing files will be deleted or overwritten!")
