@@ -5,11 +5,11 @@ signalexport () {
         echo 'e.g. signalexport output'
     else
         if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-            input="~/.config/Signal/"
+            input="$HOME/.config/Signal/"
         elif [[ "$OSTYPE" == "darwin"* ]]; then
-            input="~/Library/Application Support/Signal/"
+            input="$HOME/Library/Application Support/Signal/"
         else
-            input="~/AppData/Roaming/Signal/"
+            input="$HOME/AppData/Roaming/Signal/"
         fi
 
         output=$(readlink -f $1)
