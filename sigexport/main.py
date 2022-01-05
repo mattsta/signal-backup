@@ -54,7 +54,11 @@ def copy_attachments(src, dest, conversations, contacts):
         for msg in messages:
             if "attachments" in msg and msg["attachments"]:
                 attachments = msg["attachments"]
-                date = datetime.fromtimestamp(msg["timestamp"] / 1000.0).isoformat()
+                date = (
+                    datetime.fromtimestamp(msg["timestamp"] / 1000.0)
+                    .isoformat()
+                    .replace(":", "-")
+                )
                 for i, att in enumerate(attachments):
                     try:
                         # Account for no fileName key
@@ -585,7 +589,9 @@ def main(
     if not dest.is_dir() or overwrite:
         dest.mkdir(parents=True, exist_ok=True)
     else:
-        secho(f"Output folder '{dest}' already exists, didn't do anything!", fg=colors.RED)
+        secho(
+            f"Output folder '{dest}' already exists, didn't do anything!", fg=colors.RED
+        )
         secho("Use --overwrite (or -o) to ignore existing directory.", fg=colors.RED)
         sys.exit(1)
 
