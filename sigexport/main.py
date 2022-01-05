@@ -417,12 +417,14 @@ def create_html(dest, msgs_per_page=100):
                         im.replace_with(temp)
 
                 # voice notes
-                voices = soup.select(r"a[href*=\.m4a]")
+                voices = soup.select("a")
+                p = re.compile(r'a href=".*\.(m4a|aac)"')
                 for v in voices:
-                    href = v["href"]
-                    temp = BeautifulSoup(audio_template, "html.parser")
-                    temp.audio.source["src"] = href
-                    v.replace_with(temp)
+                    if p.search(str(v)):
+                        href = v["href"]
+                        temp = BeautifulSoup(audio_template, "html.parser")
+                        temp.audio.source["src"] = href
+                        v.replace_with(temp)
 
                 # videos
                 videos = soup.select(r"a[href*=\.mp4]")
