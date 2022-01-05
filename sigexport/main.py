@@ -96,7 +96,10 @@ def make_simple(dest, conversations, contacts):
         # some contact names are None
         if name is None:
             name = "None"
-        mdfile = open(dest / name / "index.md", "a")
+        mdpath = dest / name / "index.md"
+        with open(mdpath, "w") as _:
+            pass  # overwrite file if it exists
+        mdfile = open(mdpath, "a")
 
         for msg in messages:
             timestamp = (
