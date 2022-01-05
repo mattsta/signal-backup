@@ -188,6 +188,12 @@ def make_simple(dest, conversations, contacts, add_quote=False):
                             )
                 body += "\n(- " + ", ".join(reactions) + " -)"
 
+            if "sticker" in msg and msg["sticker"]:
+                try:
+                    body = msg["sticker"]["data"]["emoji"]
+                except KeyError:
+                    pass
+
             quote = ""
             if add_quote and "quote" in msg and msg["quote"]:
                 quote = "\n>\n> "
