@@ -87,7 +87,7 @@ Follow the instructions for your OS:
 #### For Ubuntu (other distros can adapt to their package manager)
 Install the required libraries.
 ```
-sudo apt install libsqlite3-dev libsqlite3-dev tclsh libssl-dev
+sudo apt install libsqlite3-dev tclsh libssl-dev
 ```
 
 Then clone [sqlcipher](https://github.com/sqlcipher/sqlcipher) and install it:
@@ -176,3 +176,5 @@ Run tests with:
 tox
 ```
 
+## Similar things
+[signal-backup-decode](https://github.com/pajowu/signal-backup-decode) might be easier if you use Android!
