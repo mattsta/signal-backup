@@ -26,13 +26,13 @@ First off, [install Docker](https://docs.docker.com/get-docker/).
 Then set your input and output locations as environment variables.
 ```bash
 # Only enter one of these!
-SIGNAL_INPUT="~/.config/Signal"                     # Linux
-SIGNAL_INPUT="~/Library/Application Support/Signal" # macOS
-SIGNAL_INPUT="~/AppData/Roaming/Signal"             # Windows
+SIGNAL_INPUT=~/.config/Signal                     # Linux
+SIGNAL_INPUT=~/Library/Application Support/Signal # macOS
+SIGNAL_INPUT=~/AppData/Roaming/Signal             # Powershell
 
 # And your output location
 # You must specify the full path or Docker will complain!
-SIGNAL_OUTPUT="~/Documents/output"
+SIGNAL_OUTPUT=~/Downloads/signal-output
 ```
 
 Then run the following command, which pulls in the environment variables you set above.
