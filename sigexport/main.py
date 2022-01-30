@@ -209,7 +209,8 @@ def fetch_data(db_file, key, manual=False, chats: str = None):
 
     contacts = {}
     convos = {}
-    chats = chats.split(",")
+    if chats:
+        chats = chats.split(",")
 
     db_file_decrypted = db_file.parents[0] / "db-decrypt.sqlite"
     if manual:
@@ -259,7 +260,7 @@ def fetch_data(db_file, key, manual=False, chats: str = None):
         if contacts[cid]["name"] is None:
             contacts[cid]["name"] = contacts[cid]["profileName"]
 
-        if result[3] in chats or result[4] in chats:
+        if not chats or (result[3] in chats or result[4] in chats):
             convos[cid] = []
 
         if is_group:
