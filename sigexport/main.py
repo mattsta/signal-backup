@@ -204,11 +204,12 @@ def make_simple(dest, conversations, contacts, add_quote=False):
             print(f"[{date}] {sender}: {quote}{body}", file=mdfile)
 
 
-def fetch_data(db_file, key, manual=False, chats=None):
+def fetch_data(db_file, key, manual=False, chats: str = None):
     """Load SQLite data into dicts."""
 
     contacts = {}
     convos = {}
+    chats = chats.split(",")
 
     db_file_decrypted = db_file.parents[0] / "db-decrypt.sqlite"
     if manual:
@@ -242,9 +243,6 @@ def fetch_data(db_file, key, manual=False, chats=None):
             cursor.execute("PRAGMA cipher_kdf_algorithm = PBKDF2_HMAC_SHA512")
 
     query = "SELECT type, id, e164, name, profileName, members FROM conversations"
-    if chats is not None:
-        chats = chats.replace(",", '","')
-        query = query + f' WHERE name IN ("{chats}") OR profileName IN ("{chats}")'
     c.execute(query)
     for result in c:
         if log:
@@ -260,7 +258,9 @@ def fetch_data(db_file, key, manual=False, chats=None):
         }
         if contacts[cid]["name"] is None:
             contacts[cid]["name"] = contacts[cid]["profileName"]
-        convos[cid] = []
+
+        if result[3] in chats or result[4] in chats:
+            convos[cid] = []
 
         if is_group:
             usable_members = []
