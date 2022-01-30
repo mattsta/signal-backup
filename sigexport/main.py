@@ -196,7 +196,7 @@ def make_simple(dest, conversations, contacts, add_quote=False):
                     pass
 
             quote = ""
-            if add_quote and "quote" in msg and msg["quote"]:
+            if add_quote and "quote" in msg and msg["quote"] and msg["quote"]["text"]:
                 quote = "\n>\n> "
                 quote += msg["quote"]["text"]
                 quote += "\n>\n"
