@@ -564,7 +564,7 @@ def main(
     overwrite: bool = Option(
         False, "--overwrite", "-o", help="Overwrite existing output"
     ),
-    quote: bool = Option(False, "--quote", "-q", help="Include quote text"),
+    quote: bool = Option(True, "--quote/--no-quote", "-q", help="Include quote text"),
     paginate: int = Option(
         100, "--paginate", "-p", help="Messages per page in HTML; set to 0 for infinite"
     ),

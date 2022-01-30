@@ -142,17 +142,18 @@ Arguments:
   DEST  [required]
 
 Options:
-  --source PATH           Path to Signal source database
-  --old PATH              Path to previous export to merge
-  -o, --overwrite         Overwrite existing output  [default: False]
-  -p, --paginate INTEGER  Messages per page in HTML; set to 0 for infinite
-                          [default: 100]
-  --chats TEXT            Comma-separated chat names to include: contact names
-                          or group names
-  -l, --list-chats        List available chats and exit  [default: False]
-  -m, --manual            Attempt to manually decrypt DB  [default: False]
-  -v, --verbose           [default: False]
-  --help                  Show this message and exit.
+  --source PATH               Path to Signal source database
+  --old PATH                  Path to previous export to merge
+  -o, --overwrite             Overwrite existing output  [default: False]
+  -q, --quote / --no-quote    Include quote text  [default: quote]
+  -p, --paginate INTEGER      Messages per page in HTML; set to 0 for infinite
+                              [default: 100]
+  --chats TEXT                Comma-separated chat names to include: contact names
+                              or group names
+  -l, --list-chats            List available chats and exit  [default: False]
+  -m, --manual                Attempt to manually decrypt DB  [default: False]
+  -v, --verbose               [default: False]
+  --help                      Show this message and exit.
 ```
 
 You can add `--source /path/to/source/dir/` if the script doesn't manage to find the Signal config location. Default locations per OS are below. The directory should contain a folder called `sql` with a `db.sqlite` inside it.
