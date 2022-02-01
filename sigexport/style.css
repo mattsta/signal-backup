@@ -136,6 +136,10 @@ label > img {
     visibility: visible;
 }
 
+.reaction {
+    float: right;
+}
+
 .quote {
     margin: .5rem 0 1rem 1rem;
     background-color: #f7f6ff;
