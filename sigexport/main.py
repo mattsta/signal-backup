@@ -79,10 +79,12 @@ def copy_attachments(src, dest, conversations, contacts):
                         shutil.copy2(src_att / att_path, contact_path / att["fileName"])
                     except KeyError:
                         if log:
-                            secho(f"\t\tBroken attachment:\t{name}\t{att['path']}")
+                            p = att["path"] if "path" in att else ""
+                            secho(f"\t\tBroken attachment:\t{name}\t{p}")
                     except FileNotFoundError:
                         if log:
-                            secho(f"\t\tAttachment not found:\t{name} {att['path']}")
+                            p = att["path"] if "path" in att else ""
+                            secho(f"\t\tAttachment not found:\t{name}\t{p}")
             else:
                 msg["attachments"] = []
 
