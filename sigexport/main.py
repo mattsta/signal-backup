@@ -196,10 +196,12 @@ def make_simple(dest, conversations, contacts, add_quote=False):
                     pass
 
             quote = ""
-            if add_quote and "quote" in msg and msg["quote"] and msg["quote"]["text"]:
-                quote = "\n>\n> "
-                quote += msg["quote"]["text"]
-                quote += "\n>\n"
+            if add_quote:
+                try:
+                    quote = msg["quote"]["text"]
+                    quote = f"\n>\n> {quote}\n>\n"
+                except (KeyError, TypeError):
+                    pass
 
             print(f"[{date}] {sender}: {quote}{body}", file=mdfile)
 
@@ -390,7 +392,7 @@ def create_html(dest, msgs_per_page=100):
                 body = p.sub("", body)
 
                 # quote
-                p = re.compile(r">\n> (.*)\n>")
+                p = re.compile(r">\n> (.*)\n>", flags=re.DOTALL)
                 m = p.search(body)
                 if m:
                     quote = m.groups()[0]
