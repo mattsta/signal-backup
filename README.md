@@ -26,28 +26,28 @@ First off, [install Docker](https://docs.docker.com/get-docker/).
 Then set your input and output locations as environment variables.
 ```bash
 # Only enter one of these!
-SIGNAL_INPUT=~/.config/Signal                     # Linux
-SIGNAL_INPUT=~/Library/Application Support/Signal # macOS
-SIGNAL_INPUT=~/AppData/Roaming/Signal             # Powershell
+SIGNAL_INPUT="$HOME/.config/Signal"                     # Linux
+SIGNAL_INPUT="$HOME/Library/Application Support/Signal" # macOS
+SIGNAL_INPUT="$HOME/AppData/Roaming/Signal"             # Powershell
 
 # And your output location
 # You must specify the full path or Docker will complain!
-SIGNAL_OUTPUT=~/Downloads/signal-output
+SIGNAL_OUTPUT="$HOME/Downloads/signal-output"
 ```
 
 Then run the following command, which pulls in the environment variables you set above.
 ```bash
 docker run --rm -it --name signal-export \
-  -v ${SIGNAL_INPUT}:/Signal \
-  -v ${SIGNAL_OUTPUT}:/output \
+  -v $SIGNAL_INPUT:/Signal \
+  -v $SIGNAL_OUTPUT:/output \
   carderne/signal-export:latest
 ```
 
 You can also pass command line arguments to the script as normal, e.g.:
 ```bash
 docker run --rm -it --name signal-export \
-  -v ${SIGNAL_INPUT}:/Signal \
-  -v ${SIGNAL_OUTPUT}:/output \
+  -v $SIGNAL_INPUT:/Signal \
+  -v $SIGNAL_OUTPUT:/output \
   carderne/signal-export:latest --overwrite --chats=Jim
 ```
 
