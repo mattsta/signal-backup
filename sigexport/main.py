@@ -67,7 +67,12 @@ def copy_attachments(src, dest, conversations, contacts):
                         )
                         # Sometimes the key is there but it is None, needs extension
                         if "." not in file_name:
-                            file_name += "." + att["contentType"].split("/")[1]
+                            content_type = att["contentType"].split("/")
+                            try:
+                                ext = content_type[1]
+                            except IndexError:
+                                ext = content_type[0]
+                            file_name += "." + ext
                         att["fileName"] = (
                             f"{date}_{i:02}_{file_name}".replace(" ", "_")
                             .replace("/", "-")
