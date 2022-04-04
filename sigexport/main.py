@@ -94,6 +94,10 @@ def copy_attachments(src, dest, conversations, contacts):
                 msg["attachments"] = []
 
 
+def timestamp_format(ts):
+    return datetime.fromtimestamp(ts / 1000.0).strftime("%Y-%m-%d %H:%M")
+
+
 def make_simple(dest, conversations, contacts, add_quote=False):
     """Output each conversation into a simple text file."""
 
@@ -112,22 +116,15 @@ def make_simple(dest, conversations, contacts, add_quote=False):
         mdfile = open(mdpath, "a")
 
         for msg in messages:
-            timestamp = (
-                msg["sent_at"]
-                if "sent_at" in msg
-                else msg["timestamp"]
-                if "timestamp" in msg
-                else None
-            )
-
-            if timestamp is None:
-                if log:
-                    secho("\t\tNo timestamp or sent_at; date set to 1970")
-                date = "1970-01-01 00:00"
-            else:
-                date = datetime.fromtimestamp(timestamp / 1000.0).strftime(
-                    "%Y-%m-%d %H:%M"
-                )
+            try:
+                date = timestamp_format(msg["sent_at"])
+            except (KeyError, TypeError):
+                try:
+                    date = timestamp_format(msg["sent_at"])
+                except (KeyError, TypeError):
+                    date = "1970-01-01 00:00"
+                    if log:
+                        secho("\t\tNo timestamp or sent_at; date set to 1970")
 
             if log:
                 secho(f"\t\tDoing {name}, msg: {date}")
