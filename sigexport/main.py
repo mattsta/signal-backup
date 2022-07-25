@@ -225,7 +225,7 @@ def fetch_data(db_file, key, manual=False, chats: str = None):
         if db_file_decrypted.exists():
             db_file_decrypted.unlink()
         command = (
-            f'secho "'
+            f'echo "'
             f"PRAGMA key = \\\"x'{key}'\\\";"
             f"ATTACH DATABASE '{db_file_decrypted}' AS plaintext KEY '';"
             f"SELECT sqlcipher_export('plaintext');"
