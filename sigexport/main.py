@@ -1,25 +1,28 @@
 import json
-import sys
 import os
-import shutil
-from pathlib import Path
-from datetime import datetime
 import re
+import shutil
 import sqlite3
+import sys
+from datetime import datetime
+from pathlib import Path
+from typing import Any, Optional, Union
+
 import emoji
-from typing import Optional
-
-from typer import run, secho, Option, Argument, colors
-
-from pysqlcipher3 import dbapi2 as sqlcipher
 import markdown
 from bs4 import BeautifulSoup
-
+from pysqlcipher3 import dbapi2 as sqlcipher
+from typer import Argument, Option, colors, run, secho
 
 log = False
 
+Convo = dict[str, Any]
+Convos = dict[str, list[Convo]]
+Contact = dict[str, str]
+Contacts = dict[str, Contact]
 
-def source_location():
+
+def source_location() -> Path:
     """Get OS-dependent source location."""
 
     home = Path.home()
@@ -36,13 +39,13 @@ def source_location():
     return source_path
 
 
-def copy_attachments(src, dest, conversations, contacts):
+def copy_attachments(src: Path, dest: Path, convos: Convos, contacts: Contacts) -> None:
     """Copy attachments and reorganise in destination directory."""
 
     src_att = Path(src) / "attachments.noindex"
     dest = Path(dest)
 
-    for key, messages in conversations.items():
+    for key, messages in convos.items():
         name = contacts[key]["name"]
         if log:
             secho(f"\tCopying attachments for: {name}")
@@ -94,15 +97,17 @@ def copy_attachments(src, dest, conversations, contacts):
                 msg["attachments"] = []
 
 
-def timestamp_format(ts):
+def timestamp_format(ts: float) -> str:
     return datetime.fromtimestamp(ts / 1000.0).strftime("%Y-%m-%d %H:%M")
 
 
-def make_simple(dest, conversations, contacts, add_quote=False):
+def make_simple(
+    dest: Path, convos: Convos, contacts: Contacts, add_quote: bool = False
+) -> None:
     """Output each conversation into a simple text file."""
 
     dest = Path(dest)
-    for key, messages in conversations.items():
+    for key, messages in convos.items():
         name = contacts[key]["name"]
         if log:
             secho(f"\tDoing markdown for: {name}")
@@ -210,13 +215,15 @@ def make_simple(dest, conversations, contacts, add_quote=False):
             print(f"[{date}] {sender}: {quote}{body}", file=mdfile)
 
 
-def fetch_data(db_file, key, manual=False, chats: str = None):
+def fetch_data(
+    db_file: Path, key: str, manual: bool = False, chats: str = None
+) -> tuple[Convos, Contacts]:
     """Load SQLite data into dicts."""
 
-    contacts = {}
-    convos = {}
+    contacts: Contacts = {}
+    convos: Convos = {}
     if chats:
-        chats = chats.split(",")
+        chats_list = chats.split(",")
 
     db_file_decrypted = db_file.parents[0] / "db-decrypt.sqlite"
     if manual:
@@ -266,24 +273,8 @@ def fetch_data(db_file, key, manual=False, chats: str = None):
         if contacts[cid]["name"] is None:
             contacts[cid]["name"] = contacts[cid]["profileName"]
 
-        if not chats or (result[3] in chats or result[4] in chats):
+        if not chats or (result[3] in chats_list or result[4] in chats_list):
             convos[cid] = []
-
-        if is_group:
-            usable_members = []
-            # Match group members from phone number to name
-            if result[5] is None:
-                if log:
-                    secho("\tEmpty group.")
-            else:
-                for member in result[5].split():
-                    c2.execute(
-                        "SELECT name, profileName FROM conversations WHERE id=?",
-                        [member],
-                    )
-                    for name in c2:
-                        usable_members.append(name[0] if name else member)
-                contacts[cid]["members"] = usable_members
 
     c.execute("SELECT json, conversationId " "FROM messages " "ORDER BY sent_at")
     for result in c:
@@ -298,7 +289,7 @@ def fetch_data(db_file, key, manual=False, chats: str = None):
     return convos, contacts
 
 
-def fix_names(contacts):
+def fix_names(contacts: Contacts) -> Contacts:
     """Convert contact names to filesystem-friendly."""
     fixed_contact_names = set()
     for key, item in contacts.items():
@@ -323,7 +314,7 @@ def fix_names(contacts):
     return contacts
 
 
-def create_html(dest, msgs_per_page=100):
+def create_html(dest: Path, msgs_per_page: int = 100) -> None:
     root = Path(__file__).resolve().parents[0]
     css_source = root / "style.css"
     css_dest = dest / "style.css"
@@ -346,8 +337,8 @@ def create_html(dest, msgs_per_page=100):
             # touch first
             open(path, "a")
             with path.open() as f:
-                lines = f.readlines()
-            lines = lines_to_msgs(lines)
+                lines_raw = f.readlines()
+            lines = lines_to_msgs(lines_raw)
             last_page = int(len(lines) / msgs_per_page)
             htfile = open(sub / "index.html", "w")
             print(
@@ -408,7 +399,7 @@ def create_html(dest, msgs_per_page=100):
                 body = md.convert(body)
 
                 # links
-                p = r"(https{0,1}://\S*)"
+                p = re.compile(r"(https{0,1}://\S*)")
                 template = r"<a href='\1' target='_blank'>\1</a> "
                 body = re.sub(p, template, body)
 
@@ -498,7 +489,7 @@ figure_template = """
 """
 
 
-def lines_to_msgs(lines):
+def lines_to_msgs(lines: list[str]) -> list[list[str]]:
     p = re.compile(r"^(\[\d{4}-\d{2}-\d{2},{0,1} \d{2}:\d{2}\])(.*?:)(.*\n)")
     msgs = []
     for li in lines:
@@ -510,20 +501,23 @@ def lines_to_msgs(lines):
     return msgs
 
 
-def merge_attachments(media_new, media_old):
+def merge_attachments(media_new: Path, media_old: Path) -> None:
     for f in media_old.iterdir():
         if f.is_file():
             shutil.copy2(f, media_new)
 
 
-def merge_chat(path_new, path_old):
+def merge_chat(path_new: Path, path_old: Path) -> None:
     with path_old.open() as f:
-        old = f.readlines()
+        old_raw = f.readlines()
     with path_new.open() as f:
-        new = f.readlines()
+        new_raw = f.readlines()
 
     try:
-        a, b, c, d = old[0][:30], old[-1][:30], new[0][:30], new[-1][:30]
+        a = old_raw[0][:30]
+        b = old_raw[-1][:30]
+        c = new_raw[0][:30]
+        d = new_raw[-1][:30]
         if log:
             secho(f"\t\tFirst line old:\t{a}")
             secho(f"\t\tLast line old:\t{b}")
@@ -534,18 +528,16 @@ def merge_chat(path_new, path_old):
             secho("\t\tNo new messages for this conversation")
         return
 
-    old = lines_to_msgs(old)
-    new = lines_to_msgs(new)
+    old = lines_to_msgs(old_raw)
+    new = lines_to_msgs(new_raw)
 
-    merged = old + new
-    merged = [m[0] + m[1] + m[2] for m in merged]
-    merged = list(dict.fromkeys(merged))
+    merged = list(dict.fromkeys([m[0] + m[1] + m[2] for m in old + new]))
 
     with path_new.open("w") as f:
         f.writelines(merged)
 
 
-def merge_with_old(dest, old):
+def merge_with_old(dest: Path, old: Path) -> None:
     for sub in dest.iterdir():
         if sub.is_dir():
             name = sub.stem
@@ -565,7 +557,7 @@ def merge_with_old(dest, old):
 
 
 def main(
-    dest: Path = Argument(Path("output")),
+    dest: Path = Argument(...),
     source: Optional[Path] = Option(None, help="Path to Signal source database"),
     old: Optional[Path] = Option(None, help="Path to previous export to merge"),
     overwrite: bool = Option(
