@@ -545,15 +545,15 @@ def merge_chat(path_new: Path, path_old: Path) -> None:
 
 
 def merge_with_old(dest: Path, old: Path) -> None:
-    for sub in dest.iterdir():
-        if sub.is_dir():
-            name = sub.stem
+    for dir_old in old.iterdir():
+        if dir_old.is_dir():
+            name = dir_old.stem
             if log:
                 secho(f"\tMerging {name}")
-            dir_old = old / name
-            if dir_old.is_dir():
-                merge_attachments(sub / "media", dir_old / "media")
-                path_new = sub / "index.md"
+            dir_new = old / name
+            if dir_new.is_dir():
+                merge_attachments(dir_new / "media", dir_old / "media")
+                path_new = dir_new / "index.md"
                 path_old = dir_old / "index.md"
                 try:
                     merge_chat(path_new, path_old)
@@ -561,6 +561,9 @@ def merge_with_old(dest: Path, old: Path) -> None:
                     if log:
                         secho(f"\tNo old for {name}")
                 secho()
+            else:
+                shutil.copytree(dir_old, dir_new)
+
 
 
 def main(
