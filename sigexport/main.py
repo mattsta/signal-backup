@@ -216,7 +216,11 @@ def make_simple(
 
 
 def fetch_data(
-    db_file: Path, key: str, manual: bool = False, chats: str = None
+    db_file: Path,
+    key: str,
+    manual: bool = False,
+    chats: str = None,
+    include_empty=False,
 ) -> tuple[Convos, Contacts]:
     """Load SQLite data into dicts."""
 
@@ -285,6 +289,9 @@ def fetch_data(
 
     if db_file_decrypted.exists():
         db_file_decrypted.unlink()
+
+    if not include_empty:
+        convos = {key: val for key, val in convos.items() if len(val) > 0}
 
     return convos, contacts
 
@@ -573,6 +580,9 @@ def main(
     list_chats: bool = Option(
         False, "--list-chats", "-l", help="List available chats and exit"
     ),
+    include_empty: bool = Option(
+        False, "--include-empty", help="Whether to include empty chats"
+    ),
     manual: bool = Option(
         False, "--manual", "-m", help="Attempt to manually decrypt DB"
     ),
@@ -609,7 +619,9 @@ def main(
 
     if log:
         secho(f"Fetching data from {db_file}\n")
-    convos, contacts = fetch_data(db_file, key, manual=manual, chats=chats)
+    convos, contacts = fetch_data(
+        db_file, key, manual=manual, chats=chats, include_empty=include_empty
+    )
 
     if list_chats:
         names = sorted(v["name"] for v in contacts.values() if v["name"] is not None)
