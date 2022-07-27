@@ -6,7 +6,7 @@ import sqlite3
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any, Optional, Union, List, Dict, Tuple
 
 import emoji
 import markdown
@@ -16,10 +16,10 @@ from typer import Argument, Option, colors, run, secho
 
 log = False
 
-Convo = dict[str, Any]
-Convos = dict[str, list[Convo]]
-Contact = dict[str, str]
-Contacts = dict[str, Contact]
+Convo = Dict[str, Any]
+Convos = Dict[str, List[Convo]]
+Contact = Dict[str, str]
+Contacts = Dict[str, Contact]
 
 
 def source_location() -> Path:
@@ -221,7 +221,7 @@ def fetch_data(
     manual: bool = False,
     chats: str = None,
     include_empty=False,
-) -> tuple[Convos, Contacts]:
+) -> Tuple[Convos, Contacts]:
     """Load SQLite data into dicts."""
 
     contacts: Contacts = {}
@@ -496,7 +496,7 @@ figure_template = """
 """
 
 
-def lines_to_msgs(lines: list[str]) -> list[list[str]]:
+def lines_to_msgs(lines: List[str]) -> List[List[str]]:
     p = re.compile(r"^(\[\d{4}-\d{2}-\d{2},{0,1} \d{2}:\d{2}\])(.*?:)(.*\n)")
     msgs = []
     for li in lines:
