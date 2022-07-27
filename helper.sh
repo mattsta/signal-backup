@@ -1,4 +1,16 @@
 # This is a utility function to make running the Docker image easier
+#
+# Source it as follows:
+# source helper.sh
+#
+# And then use it as follows:
+# signalexport ~/Downloads/signal-chats/
+
+realpath_local() {
+    # From https://stackoverflow.com/a/3572105
+    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+}
+
 signalexport () {
     if [[ -z "$1" ]]; then
         echo 'Must provide output path as first parameters'
@@ -12,7 +24,7 @@ signalexport () {
             input="$HOME/AppData/Roaming/Signal/"
         fi
 
-        output=$(realpath $1)
+        output=$(realpath_local $1)
         shift 1
         docker run --rm -it --name signal-export \
           -v "$input:/Signal" \
