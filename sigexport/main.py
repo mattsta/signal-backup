@@ -403,7 +403,11 @@ def create_html(dest: Path, msgs_per_page: int = 100) -> None:
                     quote = ""
                 body = p.sub("", body)
 
-                body = md.convert(body)
+                try:
+                    body = md.convert(body)
+                except RecursionError:
+                    if log:
+                        secho(f"Maximum recursion on message {body}, not converted")
 
                 # links
                 p = re.compile(r"(https{0,1}://\S*)")
