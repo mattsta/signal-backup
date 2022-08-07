@@ -6,7 +6,7 @@ import sqlite3
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional, Union, List, Dict, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import emoji
 import markdown
@@ -565,7 +565,6 @@ def merge_with_old(dest: Path, old: Path) -> None:
                 shutil.copytree(dir_old, dir_new)
 
 
-
 def main(
     dest: Path = Argument(...),
     source: Optional[Path] = Option(None, help="Path to Signal source database"),
@@ -580,6 +579,7 @@ def main(
     chats: str = Option(
         None, help="Comma-separated chat names to include: contact names or group names"
     ),
+    html: bool = Option(True, help="Whether to create HTML output"),
     list_chats: bool = Option(
         False, "--list-chats", "-l", help="List available chats and exit"
     ),
@@ -650,10 +650,11 @@ def main(
         secho(f"Merging old at {old} into output directory")
         secho("No existing files will be deleted or overwritten!")
         merge_with_old(dest, Path(old))
-    secho("Creating HTML files")
-    if paginate <= 0:
-        paginate = int(1e20)
-    create_html(dest, msgs_per_page=paginate)
+    if html:
+        secho("Creating HTML files")
+        if paginate <= 0:
+            paginate = int(1e20)
+        create_html(dest, msgs_per_page=paginate)
     secho("Done!", fg=colors.GREEN)
 
 
