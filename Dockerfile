@@ -1,8 +1,11 @@
-FROM python:3.9.7
+FROM python:3.10.6-slim-bullseye
 
 ENV PYTHONUNBUFFERED=1
 
 ENV LD_LIBRARY_PATH=/usr/local/lib
+
+RUN apt-get update && \
+    apt-get install -y git gcc libsqlite3-dev tclsh libssl-dev libc6-dev make
 
 RUN git clone --depth=1 --branch=master https://github.com/sqlcipher/sqlcipher.git && \
   cd sqlcipher && \
@@ -12,14 +15,14 @@ RUN git clone --depth=1 --branch=master https://github.com/sqlcipher/sqlcipher.g
   make install
 
 RUN pip3 install \
-    beautifulsoup4==4.8.2 \
-    typer==0.4.0 \
-    emoji==1.4.2 \
-    Markdown==3.0 \
-    pysqlcipher3==1.0.4
+    beautifulsoup4==4.11.1 \
+    typer==0.6.1 \
+    emoji==1.7.0 \
+    Markdown==3.4.1 \
+    pysqlcipher3==1.1.0
 
 COPY . signal-export/
-RUN pip3 install --use-feature=in-tree-build ./signal-export/
+RUN pip3 install ./signal-export/
 
 RUN groupadd dummy -g1000 && useradd dummy -u1000 -g1000
 
