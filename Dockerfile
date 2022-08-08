@@ -16,7 +16,7 @@ RUN git clone --depth=1 --branch=master https://github.com/sqlcipher/sqlcipher.g
 
 RUN pip3 install \
     beautifulsoup4==4.11.1 \
-    typer==0.6.1 \
+    typer[all]==0.6.1 \
     emoji==1.7.0 \
     Markdown==3.4.1 \
     pysqlcipher3==1.1.0
