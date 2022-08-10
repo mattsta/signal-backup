@@ -6,7 +6,7 @@ import sqlite3
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import emoji
 import markdown
@@ -323,6 +323,9 @@ def fix_names(contacts: Contacts) -> Contacts:
 
 def create_html(dest: Path, msgs_per_page: int = 100) -> None:
     root = Path(__file__).resolve().parents[0]
+    video_template = (root / "video.html").read_text()
+    audio_template = (root / "audio.html").read_text()
+    figure_template = (root / "figure.html").read_text()
     css_source = root / "style.css"
     css_dest = dest / "style.css"
     if os.path.isfile(css_source):
@@ -468,36 +471,6 @@ def create_html(dest: Path, msgs_per_page: int = 100) -> None:
                 file=htfile,
             )
             print("</body></html>", file=htfile)
-
-
-video_template = """
-<video controls>
-    <source src="src" type="video/mp4">
-    </source>
-</video>
-"""
-
-audio_template = """
-<audio controls>
-<source src="src" type="audio/mp4">
-</audio>
-"""
-
-figure_template = """
-<figure>
-    <label for="src">
-        <img load="lazy" src="src" alt="img">
-    </label>
-    <input class="modal-state" id="src" type="checkbox">
-    <div class="modal">
-        <label for="src">
-            <div class="modal-content">
-                <img class="modal-photo" loading="lazy" src="src" alt="img">
-            </div>
-        </label>
-    </div>
-</figure>
-"""
 
 
 def lines_to_msgs(lines: List[str]) -> List[List[str]]:
