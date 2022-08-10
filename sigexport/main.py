@@ -14,6 +14,8 @@ from bs4 import BeautifulSoup
 from pysqlcipher3 import dbapi2 as sqlcipher
 from typer import Argument, Option, colors, run, secho
 
+from . import templates
+
 log = False
 
 Convo = Dict[str, Any]
@@ -321,9 +323,6 @@ def fix_names(contacts: Contacts) -> Contacts:
 
 def create_html(dest: Path, msgs_per_page: int = 100) -> Iterable[Tuple[Path, str]]:
     root = Path(__file__).resolve().parents[0]
-    video_template = (root / "video.html").read_text()
-    audio_template = (root / "audio.html").read_text()
-    figure_template = (root / "figure.html").read_text()
     css_source = root / "style.css"
     css_dest = dest / "style.css"
     if os.path.isfile(css_source):
@@ -349,17 +348,7 @@ def create_html(dest: Path, msgs_per_page: int = 100) -> Iterable[Tuple[Path, st
             lines = lines_to_msgs(lines_raw)
             last_page = int(len(lines) / msgs_per_page)
             ht_path = sub / "index.html"
-            ht_text = f"""
-            <!doctype html>
-            <html lang='en'><head>
-            <meta charset='utf-8'>
-            <title>{name}</title>
-            <link rel=stylesheet href='../style.css'>
-            </head>
-            <body>
-            <div class=first><a href=#pg0>FIRST</a></div>
-            <div class=last><a href=#pg{last_page}>LAST</a></div>
-            """
+            ht_content = ""
 
             page_num = 0
             for i, msg in enumerate(lines):
@@ -380,7 +369,7 @@ def create_html(dest: Path, msgs_per_page: int = 100) -> Iterable[Tuple[Path, st
                     else:
                         nav += "NEXT"
                     nav += "</div></nav>\n"
-                    ht_text += nav
+                    ht_content += nav
                     page_num += 1
 
                 date, sender, body = msg
@@ -419,52 +408,40 @@ def create_html(dest: Path, msgs_per_page: int = 100) -> Iterable[Tuple[Path, st
                 imgs = soup.find_all("img")
                 for im in imgs:
                     if im.get("src"):
-                        temp = BeautifulSoup(figure_template, "html.parser")
-                        src = im["src"]
-                        temp.figure.div.label.div.img["src"] = src
-                        temp.figure.label.img["src"] = src
-
-                        alt = im["alt"]
-                        temp.figure.label["for"] = alt
-                        temp.figure.label.img["alt"] = alt
-                        temp.figure.input["id"] = alt
-                        temp.figure.div.label["for"] = alt
-                        temp.figure.div.label.div.img["alt"] = alt
-                        im.replace_with(temp)
+                        temp = templates.figure.format(src=im["src"], alt=im["alt"])
+                        im.replace_with(BeautifulSoup(temp, "html.parser"))
 
                 # voice notes
                 voices = soup.select("a")
                 p = re.compile(r'a href=".*\.(m4a|aac)"')
                 for v in voices:
                     if p.search(str(v)):
-                        href = v["href"]
-                        temp = BeautifulSoup(audio_template, "html.parser")
-                        temp.audio.source["src"] = href
-                        v.replace_with(temp)
+                        temp = templates.audio.format(src=v["href"])
+                        v.replace_with(BeautifulSoup(temp, "html.parser"))
 
                 # videos
                 videos = soup.select(r"a[href*=\.mp4]")
                 for v in videos:
-                    href = v["href"]
-                    temp = BeautifulSoup(video_template, "html.parser")
-                    temp.video.source["src"] = href
-                    v.replace_with(temp)
+                    temp = templates.video.format(src=v["href"])
+                    v.replace_with(BeautifulSoup(temp, "html.parser"))
 
                 cl = "msg me" if sender == "Me" else "msg"
-                ht_text += f"""
-                <div class='{cl}'><span class=date>{date}</span>
-                <span class=time>{time}</span>
-                <span class=sender>{sender}</span>
-                {quote}
-                <span class=body>{soup.prettify()}</span>
-                <span class=reaction>{reactions}</span>
-                </div>
-                """
-            ht_text += "</div>\n"
-            ht_text += """
-            <script>if (!document.location.hash){document.location.hash = 'pg0';}</script>
-            """
-            ht_text += "\n</body></html>"
+                ht_content += templates.message.format(
+                    cl=cl,
+                    date=date,
+                    time=time,
+                    sender=sender,
+                    quote=quote,
+                    body=soup,
+                    reactions=reactions,
+                )
+            ht_text = templates.html.format(
+                name=name,
+                last_page=last_page,
+                content=ht_content,
+            )
+            ht_text = BeautifulSoup(ht_text, "html.parser").prettify()
+            ht_text = re.compile(r"^(\s*)", re.MULTILINE).sub(r"\1\1\1\1", ht_text)
             yield ht_path, ht_text
 
 
