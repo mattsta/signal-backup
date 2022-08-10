@@ -277,7 +277,7 @@ def fetch_data(
         if not chats or (result[3] in chats_list or result[4] in chats_list):
             convos[cid] = []
 
-    c.execute("SELECT json, conversationId " "FROM messages " "ORDER BY sent_at")
+    c.execute("SELECT json, conversationId FROM messages ORDER BY sent_at")
     for result in c:
         content = json.loads(result[0])
         cid = result[1]
