@@ -247,18 +247,15 @@ def fetch_data(
         # use sqlite instead of sqlcipher as DB already decrypted
         db = sqlite3.connect(str(db_file_decrypted))
         c = db.cursor()
-        c2 = db.cursor()
     else:
         db = sqlcipher.connect(str(db_file))
         c = db.cursor()
-        c2 = db.cursor()
         # param binding doesn't work for pragmas, so use a direct string concat
-        for cursor in [c, c2]:
-            cursor.execute(f"PRAGMA KEY = \"x'{key}'\"")
-            cursor.execute("PRAGMA cipher_page_size = 4096")
-            cursor.execute("PRAGMA kdf_iter = 64000")
-            cursor.execute("PRAGMA cipher_hmac_algorithm = HMAC_SHA512")
-            cursor.execute("PRAGMA cipher_kdf_algorithm = PBKDF2_HMAC_SHA512")
+        c.execute(f"PRAGMA KEY = \"x'{key}'\"")
+        c.execute("PRAGMA cipher_page_size = 4096")
+        c.execute("PRAGMA kdf_iter = 64000")
+        c.execute("PRAGMA cipher_hmac_algorithm = HMAC_SHA512")
+        c.execute("PRAGMA cipher_kdf_algorithm = PBKDF2_HMAC_SHA512")
 
     query = "SELECT type, id, e164, name, profileName, members FROM conversations"
     c.execute(query)
