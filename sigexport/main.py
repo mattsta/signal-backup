@@ -6,7 +6,7 @@ import sqlite3
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import emoji
 import markdown
@@ -39,7 +39,9 @@ def source_location() -> Path:
     return source_path
 
 
-def copy_attachments(src: Path, dest: Path, convos: Convos, contacts: Contacts) -> None:
+def copy_attachments(
+    src: Path, dest: Path, convos: Convos, contacts: Contacts
+) -> Iterable[Tuple[Path, Path]]:
     """Copy attachments and reorganise in destination directory."""
 
     src_att = Path(src) / "attachments.noindex"
@@ -84,7 +86,7 @@ def copy_attachments(src: Path, dest: Path, convos: Convos, contacts: Contacts) 
                         )
                         # account for erroneous backslash in path
                         att_path = str(att["path"]).replace("\\", "/")
-                        shutil.copy2(src_att / att_path, contact_path / att["fileName"])
+                        yield src_att / att_path, contact_path / att["fileName"]
                     except KeyError:
                         if log:
                             p = att["path"] if "path" in att else ""
@@ -101,9 +103,9 @@ def timestamp_format(ts: float) -> str:
     return datetime.fromtimestamp(ts / 1000.0).strftime("%Y-%m-%d %H:%M")
 
 
-def make_simple(
+def create_markdown(
     dest: Path, convos: Convos, contacts: Contacts, add_quote: bool = False
-) -> None:
+) -> Iterable[Tuple[Path, str]]:
     """Output each conversation into a simple text file."""
 
     dest = Path(dest)
@@ -115,10 +117,9 @@ def make_simple(
         # some contact names are None
         if name is None:
             name = "None"
-        mdpath = dest / name / "index.md"
-        with open(mdpath, "w") as _:
+        md_path = dest / name / "index.md"
+        with md_path.open("w") as _:
             pass  # overwrite file if it exists
-        mdfile = open(mdpath, "a")
 
         for msg in messages:
             try:
@@ -212,7 +213,7 @@ def make_simple(
                 except (KeyError, TypeError):
                     pass
 
-            print(f"[{date}] {sender}: {quote}{body}", file=mdfile)
+            yield md_path, f"[{date}] {sender}: {quote}{body}"
 
 
 def fetch_data(
@@ -318,7 +319,7 @@ def fix_names(contacts: Contacts) -> Contacts:
     return contacts
 
 
-def create_html(dest: Path, msgs_per_page: int = 100) -> None:
+def create_html(dest: Path, msgs_per_page: int = 100) -> Iterable[Tuple[Path, str]]:
     root = Path(__file__).resolve().parents[0]
     video_template = (root / "video.html").read_text()
     audio_template = (root / "audio.html").read_text()
@@ -347,24 +348,23 @@ def create_html(dest: Path, msgs_per_page: int = 100) -> None:
                 lines_raw = f.readlines()
             lines = lines_to_msgs(lines_raw)
             last_page = int(len(lines) / msgs_per_page)
-            htfile = open(sub / "index.html", "w")
-            print(
-                "<!doctype html>"
-                "<html lang='en'><head>"
-                "<meta charset='utf-8'>"
-                f"<title>{name}</title>"
-                "<link rel=stylesheet href='../style.css'>"
-                "</head>"
-                "<body>"
-                "<div class=first><a href=#pg0>FIRST</a></div>"
-                f"<div class=last><a href=#pg{last_page}>LAST</a></div>",
-                file=htfile,
-            )
+            ht_path = sub / "index.html"
+            ht_text = f"""
+            <!doctype html>
+            <html lang='en'><head>
+            <meta charset='utf-8'>
+            <title>{name}</title>
+            <link rel=stylesheet href='../style.css'>
+            </head>
+            <body>
+            <div class=first><a href=#pg0>FIRST</a></div>
+            <div class=last><a href=#pg{last_page}>LAST</a></div>
+            """
 
             page_num = 0
             for i, msg in enumerate(lines):
                 if i % msgs_per_page == 0:
-                    nav = ""
+                    nav = "\n"
                     if i > 0:
                         nav += "</div>"
                     nav += f"<div class=page id=pg{page_num}>"
@@ -379,8 +379,8 @@ def create_html(dest: Path, msgs_per_page: int = 100) -> None:
                         nav += f"<a href=#pg{page_num+1}>NEXT</a>"
                     else:
                         nav += "NEXT"
-                    nav += "</div></nav>"
-                    print(nav, file=htfile)
+                    nav += "</div></nav>\n"
+                    ht_text += nav
                     page_num += 1
 
                 date, sender, body = msg
@@ -451,23 +451,21 @@ def create_html(dest: Path, msgs_per_page: int = 100) -> None:
                     v.replace_with(temp)
 
                 cl = "msg me" if sender == "Me" else "msg"
-                print(
-                    f"<div class='{cl}'><span class=date>{date}</span>"
-                    f"<span class=time>{time}</span>"
-                    f"<span class=sender>{sender}</span>"
-                    f"{quote}"
-                    f"<span class=body>{soup.prettify()}</span>"
-                    f"<span class=reaction>{reactions}</span>"
-                    "</div>",
-                    file=htfile,
-                )
-            print("</div>", file=htfile)
-            print(
-                "<script>if (!document.location.hash){"
-                "document.location.hash = 'pg0';}</script>",
-                file=htfile,
-            )
-            print("</body></html>", file=htfile)
+                ht_text += f"""
+                <div class='{cl}'><span class=date>{date}</span>
+                <span class=time>{time}</span>
+                <span class=sender>{sender}</span>
+                {quote}
+                <span class=body>{soup.prettify()}</span>
+                <span class=reaction>{reactions}</span>
+                </div>
+                """
+            ht_text += "</div>\n"
+            ht_text += """
+            <script>if (!document.location.hash){document.location.hash = 'pg0';}</script>
+            """
+            ht_text += "\n</body></html>"
+            yield ht_path, ht_text
 
 
 def lines_to_msgs(lines: List[str]) -> List[List[str]]:
@@ -616,10 +614,15 @@ def main(
         sys.exit(1)
 
     contacts = fix_names(contacts)
+
     secho("Copying and renaming attachments")
-    copy_attachments(src, dest, convos, contacts)
+    for att_src, att_dst in copy_attachments(src, dest, convos, contacts):
+        shutil.copy2(att_src, att_dst)
+
     secho("Creating markdown files")
-    make_simple(dest, convos, contacts, quote)
+    for md_path, md_text in create_markdown(dest, convos, contacts, quote):
+        with md_path.open("a") as md_file:
+            print(md_text, file=md_file)
     if old:
         secho(f"Merging old at {old} into output directory")
         secho("No existing files will be deleted or overwritten!")
@@ -628,7 +631,9 @@ def main(
         secho("Creating HTML files")
         if paginate <= 0:
             paginate = int(1e20)
-        create_html(dest, msgs_per_page=paginate)
+        for ht_path, ht_text in create_html(dest, msgs_per_page=paginate):
+            with ht_path.open("w") as ht_file:
+                print(ht_text, file=ht_file)
     secho("Done!", fg=colors.GREEN)
 
 
