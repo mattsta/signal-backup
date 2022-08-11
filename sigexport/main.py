@@ -3,6 +3,7 @@ import os
 import re
 import shutil
 import sqlite3
+import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -541,6 +542,13 @@ def main(
         False, "--manual", "-m", help="Attempt to manually decrypt DB"
     ),
     verbose: bool = Option(False, "--verbose", "-v"),
+    use_docker: bool = Option(
+        False, help="Use Docker container for SQLCipher extraction"
+    ),
+    docker_image: str = Option("carderne/sigexport:latest", help="Docker image to use"),
+    print_data: bool = Option(
+        False, help="Print extracted DB data and exit (for use by Docker container)"
+    ),
 ):
     """
     Read the Signal directory and output attachments and chat files to DEST directory.
@@ -556,7 +564,7 @@ def main(
     global log
     log = verbose
 
-    if not dest and not list_chats:
+    if not any(dest, list_chats, print_data):
         secho("Error: Missing argument 'DEST'", fg=colors.RED)
         raise Exit(code=1)
 
@@ -577,9 +585,20 @@ def main(
 
     if log:
         secho(f"Fetching data from {db_file}\n")
-    convos, contacts = fetch_data(
-        db_file, key, manual=manual, chats=chats, include_empty=include_empty
-    )
+    if use_docker:
+        cmd = ["docker", "run", "--rm", f"--volume={src}:/Signal", docker_image]
+        p = subprocess.run(cmd, capture_output=True, text=True, check=True)
+        data = json.loads(p.stdout)
+        convos, contacts = data["convos"], data["contacts"]
+    else:
+        convos, contacts = fetch_data(
+            db_file, key, manual=manual, chats=chats, include_empty=include_empty
+        )
+
+    if print_data:
+        data = {"convos": convos, "contacts": contacts}
+        print(json.dumps(data))
+        raise Exit()
 
     if list_chats:
         names = sorted(v["name"] for v in contacts.values() if v["name"] is not None)

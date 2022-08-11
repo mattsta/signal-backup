@@ -21,67 +21,78 @@ Images are attached inline with `![name](path)` while other attachments (voice n
 This is converted to HTML at the end so it can be opened with any web browser. The stylesheet `.css` is still very basic but I'll get to it sooner or later.
 
 ## Installation
-### 🚀 Easy mode (maybe?): Docker
-This tool has some pretty difficult dependencies, and so a generous contributor added a Dockerfile! For most people this will probably be the easiest way. It requires installing Docker and then pulling a large image, so avoid this if data use is a concern.
+### 🚀 Easy mode with Docker
+This tool has some pretty difficult dependencies, so it's easier to get some help from Docker.
+For most people this will probably be the easiest way.
+It requires installing Docker and then pulling a 200MB image, so avoid this if data use is a concern.
 
 First off, [install Docker](https://docs.docker.com/get-docker/).
 
-Then set your input and output locations as environment variables.
+Then install this package:
 ```bash
-# Only enter one of these!
-SIGNAL_INPUT="$HOME/.config/Signal"                     # Linux
-SIGNAL_INPUT="$HOME/Library/Application Support/Signal" # macOS
-SIGNAL_INPUT="$HOME/AppData/Roaming/Signal"             # Powershell
-
-# And your output location
-# You must specify the full path or Docker will complain!
-SIGNAL_OUTPUT="$HOME/Downloads/signal-output"
+pip install signal-export
 ```
 
-Then run the following command, which pulls in the environment variables you set above.
+Then run the script!
+It will do some Docker stuff under the hood to get your data out of the encrypted database.
 ```bash
-docker run --rm -it --name signal-export \
-  -v "$SIGNAL_INPUT:/Signal" \
-  -v "$SIGNAL_OUTPUT:/output" \
-  carderne/signal-export:latest
+sigexport ~/signal-chats
+# output will be saved to the supplied directory
 ```
 
-You can also pass command line arguments to the script as normal, e.g.:
+See [Alternative installation methods](#alternative-installation-methods) below for other ways to get it working.
+
+## Usage
+Please fully exit your Signal app before proceeding, otherwise you will likely encounter an `I/O disk` error, due to the message database being made read-only, as it was being accessed by the app.
+
+See the full help info:
 ```bash
-docker run --rm -it --name signal-export \
-  -v "$SIGNAL_INPUT:/Signal" \
-  -v "$SIGNAL_OUTPUT:/output" \
-  carderne/signal-export:latest --overwrite --chats=Jim
+sigexport --help
 ```
 
-#### A helpful shortcut
-If you want to make your life even easier, then copy the contents from [helper.sh](./helper.sh) into your `.bashrc` (or equivalent). It will detect your OS and try to guess the Signal input location, and let you skip some of the Docker boilerplate from above. If it guesses the input wrong, just edit it to hard-code the correct location!
-
-Then resource your `.bashrc` as follows:
+Disable pagination on HTML, and overwrite anything at the destination:
 ```bash
-source ~/.bashrc
+sigexport --paginate=0 --overwrite ~/signal-chats
 ```
 
-And then you can simply run the following.
-(And have some Docker annoyances ironed out).
+List available chats and exit:
 ```bash
-signalexport output --chats=Jim
+sigexport --list-chats
 ```
 
+Export only the selected chats:
+```bash
+sigexport --chats=Jim,Aya ~/signal-chats
+```
+
+You can add `--source /path/to/source/dir/` if the script doesn't manage to find the Signal config location.
+Default locations per OS are below.
+The directory should contain a folder called `sql` with `db.sqlite` inside it.
+- Linux: `~/.config/Signal/`
+- macOS: `~/Library/Application Support/Signal/`
+- Windows: `~/AppData/Roaming/Signal/`
+
+You can also use `--old /previously/exported/dir/` to merge the new export with a previous one.
+_Nothing will be overwritten!_
+It will put the combined results in whatever output directory you specified and leave your previos export untouched.
+Exercise is left to the reader to verify that all went well before deleting the previous one.
+
+## Alternative installation methods
 ### 🦆 Slightly harder: build your own Docker image
 You can always build your own Docker image if you prefer that.
 Just clone this repository and build it.
 ```bash
 git clone https://github.com/carderne/signal-export.git
 cd signal-export
-docker build -t carderne/signal-export:latest .
+docker build -t sigexport .
 ```
 
-(You can obviously give it a different name and drop the `carderne` bit!)
+Then you can run the script using your own Docker image:
+```bash
+sigexport --use-docker --docker-image=sigexport ~/signal-chats
+```
 
-From then you can follow the same Docker instructions from above.
-
-### 🌋 Hard mode: actually install stuff
+### 🌋 Hard mode: install the full dependencies
 This involves actually installing the stuff into your system, but has proven hard to get work for many, especially on Windows.
 
 Before you can install `signal-export`, you need to get `sqlcipher` working.
@@ -89,12 +100,12 @@ Follow the instructions for your OS:
 
 #### For Ubuntu (other distros can adapt to their package manager)
 Install the required libraries.
-```
+```bash
 sudo apt install libsqlite3-dev tclsh libssl-dev
 ```
 
 Then clone [sqlcipher](https://github.com/sqlcipher/sqlcipher) and install it:
-```
+```bash
 git clone https://github.com/sqlcipher/sqlcipher.git
 cd sqlcipher
 ./configure --enable-tempstore=yes CFLAGS="-DSQLITE_HAS_CODEC" LDFLAGS="-lcrypto -lsqlite3"
@@ -114,64 +125,15 @@ But probably just give up here and use the Docker method instead.
 
 ### Install signal-export
 Then you're ready to install signal-export:
-```
-pip install git+https://github.com/carderne/signal-export.git
-```
-
-## Usage
-Please fully exit your Signal app before proceeding, otherwise you will likely encounter an `I/O disk` error, due to the message database being made read-only, as it was being accessed by the app. 
-
-The below refer to running the script normally.
-If you installed using Docker, then this will give you an overview of the command-line options you can use.
-Just note that with the Docker method, you can't specify the `output` and `--source` directories as command-line options, as they are handled by the `docker_entry.sh` script.
-
-The following should work:
-```
-sigexport outputdir
+(Note the `[all]` that has been added!)
+```bash
+pip install signal-export[all]
 ```
 
-To create HTML with no pagination:
-```
-sigexport outputdir -p0
-```
-
-If you get an error:
-
-    pysqlcipher3.dbapi2.DatabaseError: file is not a database
-
-try adding the `--manual` option.
-
-The full options are below:
-```
-Usage: sigexport [OPTIONS] DEST
-
-Arguments:
-  DEST  [required]
-
-Options:
-  --source PATH               Path to Signal source database
-  --old PATH                  Path to previous export to merge
-  -o, --overwrite             Overwrite existing output  [default: False]
-  -q, --quote / --no-quote    Include quote text  [default: quote]
-  -p, --paginate INTEGER      Messages per page in HTML; set to 0 for infinite
-                              [default: 100]
-  --chats TEXT                Comma-separated chat names to include: contact names
-                              or group names
-  -l, --list-chats            List available chats and exit  [default: False]
-  -m, --manual                Attempt to manually decrypt DB  [default: False]
-  -v, --verbose               [default: False]
-  --help                      Show this message and exit.
-```
-
-You can add `--source /path/to/source/dir/` if the script doesn't manage to find the Signal config location. Default locations per OS are below. The directory should contain a folder called `sql` with a `db.sqlite` inside it.
-- Linux: `~/.config/Signal/`
-- macOS: `~/Library/Application Support/Signal/`
-- Windows: `~/AppData/Roaming/Signal/`
-
-You can also use `--old /previously/exported/dir/` to merge the new export with a previous one. _Nothing will be overwritten!_ It will put the combined results in whatever output directory you specified and leave your previos export untouched. Exercise is left to the reader to verify that all went well before deleting the previous one.
+Then you should be able to use the [Usage instructions](#usage) as above.
 
 ## Development
-```
+```bash
 git clone https://github.com/carderne/signal-export.git
 cd signal-export
 pip install -e .[dev]
@@ -179,7 +141,7 @@ pre-commit install
 ```
 
 Run tests with:
-```
+```bash
 pytest --cov=sigexport --cov-report=term-missing tests/
 tox
 ```

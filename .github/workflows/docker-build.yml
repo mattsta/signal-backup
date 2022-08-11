@@ -30,7 +30,7 @@ jobs:
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
             --output "type=image,push=true" \
-            --tag=carderne/signal-export:latest \
-            --cache-from=carderne/signal-export:latest \
+            --tag=carderne/sigexport:latest \
+            --cache-from=carderne/sigexport:latest \
             --cache-to=type=inline \
             .
