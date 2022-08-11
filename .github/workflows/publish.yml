@@ -1,0 +1,30 @@
+name: publish
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v2
+
+      - name: Setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Build
+        run: |
+          pip install build
+          python -m build
+
+      - name: Publish
+        # mimics: twine upload dist/* --skip-existing
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: ${{ secrets.TWINE_USERNAME }}
+          password: ${{ secrets.TWINE_PASSWORD }}
