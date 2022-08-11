@@ -480,7 +480,7 @@ def main(
     global log
     log = verbose
 
-    if not any(dest, list_chats, print_data):
+    if not any((dest, list_chats, print_data)):
         secho("Error: Missing argument 'DEST'", fg=colors.RED)
         raise Exit(code=1)
 
