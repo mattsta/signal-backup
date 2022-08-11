@@ -468,13 +468,6 @@ def main(
 ):
     """
     Read the Signal directory and output attachments and chat files to DEST directory.
-    Assumes the following default directories, can be overridden wtih --source.
-
-    \b
-    Default Signal directories:
-     - Linux: ~/.config/Signal
-     - macOS: ~/Library/Application Support/Signal
-     - Windows: ~/AppData/Roaming/Signal
     """
 
     global log
