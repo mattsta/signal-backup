@@ -24,11 +24,15 @@ signalexport () {
             input="$HOME/AppData/Roaming/Signal/"
         fi
 
-        output=$(realpath_local $1)
-        shift 1
+        if [[ $1 == "--help" ]] || [[ $1 == "-h" ]] || [[ $1 == "--list-chats" ]] || [[ $1 == "-l" ]]; then
+            output="/tmp/signal-tmp"
+        else
+            output=$(realpath_local $1)
+            shift 1
+        fi
         docker run --rm -it --name signal-export \
           -v "$input:/Signal" \
           -v "$output:/output" \
-          carderne/signal-export:latest $@
+          signal-export:latest $@
     fi
 }

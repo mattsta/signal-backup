@@ -20,9 +20,9 @@ RUN pip3 install \
     Markdown==3.4.1 \
     pysqlcipher3==1.1.0
 
-COPY . signal-export/
-RUN pip3 install ./signal-export/
-
 RUN groupadd dummy -g1000 && useradd dummy -u1000 -g1000
 COPY docker_entry.sh .
 ENTRYPOINT ["./docker_entry.sh"]
+
+COPY . signal-export/
+RUN pip3 install ./signal-export/
