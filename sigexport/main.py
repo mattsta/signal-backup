@@ -12,7 +12,7 @@ import emoji
 import markdown
 from bs4 import BeautifulSoup
 from pysqlcipher3 import dbapi2 as sqlcipher
-from typer import Argument, Option, colors, run, secho
+from typer import Argument, Exit, Option, colors, run, secho
 
 from . import templates
 
@@ -28,15 +28,17 @@ def source_location() -> Path:
     """Get OS-dependent source location."""
 
     home = Path.home()
-    if sys.platform == "linux" or sys.platform == "linux2":
-        source_path = home / ".config/Signal"
-    elif sys.platform == "darwin":
-        source_path = home / "Library/Application Support/Signal"
-    elif sys.platform == "win32":
-        source_path = home / "AppData/Roaming/Signal"
-    else:
+    paths = {
+        "linux": home / ".config/Signal",
+        "linux2": home / ".config/Signal",
+        "darwin": home / "Library/Application Support/Signal",
+        "win32": home / "AppData/Roaming/Signal",
+    }
+    try:
+        source_path = paths[sys.platform]
+    except KeyError:
         secho("Please manually enter Signal location using --source.")
-        sys.exit(1)
+        raise Exit(code=1)
 
     return source_path
 
@@ -515,7 +517,7 @@ def merge_with_old(dest: Path, old: Path) -> None:
 
 
 def main(
-    dest: Path = Argument(...),
+    dest: Path = Argument(None),
     source: Optional[Path] = Option(None, help="Path to Signal source database"),
     old: Optional[Path] = Option(None, help="Path to previous export to merge"),
     overwrite: bool = Option(
@@ -554,6 +556,10 @@ def main(
     global log
     log = verbose
 
+    if not dest and not list_chats:
+        secho("Error: Missing argument 'DEST'", fg=colors.RED)
+        raise Exit(code=1)
+
     if source:
         src = Path(source)
     else:
@@ -567,7 +573,7 @@ def main(
             key = json.loads(conf.read())["key"]
     else:
         secho(f"Error: {source} not found in directory {src}")
-        sys.exit(1)
+        raise Exit(code=1)
 
     if log:
         secho(f"Fetching data from {db_file}\n")
@@ -577,8 +583,8 @@ def main(
 
     if list_chats:
         names = sorted(v["name"] for v in contacts.values() if v["name"] is not None)
-        secho("\n".join(names))
-        sys.exit()
+        secho(" | ".join(names))
+        raise Exit(code=1)
 
     dest = Path(dest).expanduser()
     if not dest.is_dir() or overwrite:
@@ -588,7 +594,7 @@ def main(
             f"Output folder '{dest}' already exists, didn't do anything!", fg=colors.RED
         )
         secho("Use --overwrite (or -o) to ignore existing directory.", fg=colors.RED)
-        sys.exit(1)
+        raise Exit(code=1)
 
     contacts = fix_names(contacts)
 

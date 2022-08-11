@@ -1,4 +1,4 @@
-name: dockerhub-push
+name: docker-build
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  docker:
+  build-posh:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
